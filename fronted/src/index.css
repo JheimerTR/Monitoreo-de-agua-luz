@@ -1,0 +1,26 @@
+body {
+  background-color: #f3f4f6;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Estilos del Menú Lateral */
+.menu-link {
+  transition: all 0.2s ease-in-out;
+  border-left: 4px solid transparent; /* Borde invisible por defecto */
+}
+.menu-link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff !important;
+}
+/* EL MARCADOR AMARILLO PARA LA PESTAÑA ACTIVA */
+.active-menu {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left: 4px solid #f59e0b !important; /* Color amarillo/naranja */
+  color: #ffffff !important;
+  font-weight: bold;
+}
+
+/* Sombras suaves para las tarjetas blancas */
+.sombra-suave {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

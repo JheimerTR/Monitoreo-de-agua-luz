@@ -1,131 +1,104 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import Swal from 'sweetalert2';
 
-export default function Usuarios() {
-    const [usuarios, setUsuarios] = useState([]);
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [rol, setRol] = useState('operador');
+export default function Reportes() {
+    const [resumen, setResumen] = useState([]);
+    const [mayorConsumo, setMayorConsumo] = useState(null);
+    const [menorConsumo, setMenorConsumo] = useState(null);
 
     useEffect(() => {
-        cargarUsuarios();
+        cargarReportes();
     }, []);
 
-    const cargarUsuarios = () => {
-        axios.get('http://localhost:3001/api/usuarios')
-            .then(res => setUsuarios(res.data))
-            .catch(err => console.error(err));
-    };
-
-    const registrar = (e) => {
-        e.preventDefault();
-        axios.post('http://localhost:3001/api/usuarios', { username, password, rol })
+    const cargarReportes = () => {
+        // Usamos la ruta de historial que ya existe para calcular los totales
+        axios.get('https://monitoreo-de-agua-luz.onrender.com/api/consumos')
             .then(res => {
-                Swal.fire('¡Éxito!', res.data.mensaje, 'success');
-                setUsername('');
-                setPassword('');
-                cargarUsuarios();
-            })
-            .catch(err => Swal.fire('Error', err.response?.data?.error || 'No se pudo registrar', 'error'));
-    };
+                const consumos = res.data;
+                
+                // Agrupar y sumar los consumos por departamento y servicio (CU24)
+                const agrupado = {};
+                consumos.forEach(item => {
+                    const clave = `${item.departamento}-${item.servicio}`;
+                    if (!agrupado[clave]) {
+                        agrupado[clave] = {
+                            departamento: item.departamento,
+                            servicio: item.servicio,
+                            consumoTotal: 0
+                        };
+                    }
+                    // Sumamos la variación absoluta al total
+                    agrupado[clave].consumoTotal += parseFloat(item.diferencia_absoluta || 0);
+                });
 
-    const toggleEstado = (id, estadoActual) => {
-        Swal.fire({
-            title: '¿Cambiar acceso?',
-            text: `El usuario pasará a estar ${estadoActual === 'Activo' ? 'Inactivo' : 'Activo'}.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: estadoActual === 'Activo' ? '#dc3545' : '#198754',
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sí, cambiar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                axios.put(`http://localhost:3001/api/usuarios/${id}/estado`)
-                    .then(res => {
-                        Swal.fire('Actualizado', res.data.mensaje, 'success');
-                        cargarUsuarios();
-                    })
-                    .catch(err => Swal.fire('Error', 'No se pudo cambiar el estado', 'error'));
-            }
-        });
-    };
+                const arrayResumen = Object.values(agrupado);
+                setResumen(arrayResumen);
 
-    const desbloquear = (id) => {
-        axios.put(`http://localhost:3001/api/usuarios/${id}/desbloquear`)
-            .then(res => {
-                Swal.fire('¡Desbloqueado!', res.data.mensaje, 'success');
-                cargarUsuarios();
+                // Calcular automáticamente el mayor y menor (CU25)
+                if (arrayResumen.length > 0) {
+                    const max = Math.max(...arrayResumen.map(i => i.consumoTotal));
+                    const min = Math.min(...arrayResumen.map(i => i.consumoTotal));
+                    setMayorConsumo(max);
+                    setMenorConsumo(min);
+                }
             })
-            .catch(err => Swal.fire('Error', 'No se pudo desbloquear', 'error'));
+            .catch(err => console.error("Error al cargar reportes:", err));
     };
 
     return (
         <div>
-            <h2 className="mb-4 fw-bold" style={{ color: '#1f2937' }}>Gestión de Usuarios</h2>
+            <h2 className="mb-4 fw-bold" style={{ color: '#1f2937' }}>Reportes y Estadísticas</h2>
             
-            <div className="card sombra-suave border-0 mb-4 p-2">
+            <div className="card sombra-suave border-0 mb-4 p-3">
                 <div className="card-body">
-                    <form onSubmit={registrar} className="row g-3 align-items-end">
-                        <div className="col-md-3">
-                            <label className="form-label text-muted small fw-bold">Nuevo Usuario</label>
-                            <input type="text" className="form-control" value={username} onChange={e => setUsername(e.target.value)} required />
-                        </div>
-                        <div className="col-md-3">
-                            <label className="form-label text-muted small fw-bold">Contraseña</label>
-                            <input type="password" className="form-control" value={password} onChange={e => setPassword(e.target.value)} required />
-                        </div>
-                        <div className="col-md-3">
-                            <label className="form-label text-muted small fw-bold">Rol</label>
-                            <select className="form-select" value={rol} onChange={e => setRol(e.target.value)}>
-                                <option value="operador">Operador</option>
-                                <option value="admin">Administrador</option>
-                            </select>
-                        </div>
-                        <div className="col-md-3">
-                            <button type="submit" className="btn btn-dark w-100 fw-bold">Crear Cuenta</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div className="card sombra-suave border-0 overflow-hidden">
-                <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
-                        <thead className="table-light text-muted">
-                            <tr>
-                                <th>Usuario</th>
-                                <th>Rol</th>
-                                <th>Estado</th>
-                                <th>Intentos Fallidos</th>
-                                <th className="text-end">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {usuarios.map(u => (
-                                <tr key={u.id_usuario}>
-                                    <td className="fw-bold">{u.username}</td>
-                                    <td><span className={`badge ${u.rol === 'admin' ? 'bg-primary' : 'bg-secondary'}`}>{u.rol.toUpperCase()}</span></td>
-                                    <td><span className={`badge ${u.estado === 'Activo' ? 'bg-success' : 'bg-danger'}`}>{u.estado}</span></td>
-                                    <td>
-                                        {u.intentos_fallidos >= 3 ? <span className="text-danger fw-bold">Bloqueado ({u.intentos_fallidos})</span> : u.intentos_fallidos}
-                                    </td>
-                                    <td className="text-end">
-                                        {u.intentos_fallidos >= 3 && (
-                                            <button onClick={() => desbloquear(u.id_usuario)} className="btn btn-sm btn-warning me-2 fw-bold">
-                                                🔓 Desbloquear
-                                            </button>
-                                        )}
-                                        {u.username !== 'admin' && ( // Protegemos al admin principal para que no se borre a sí mismo
-                                            <button onClick={() => toggleEstado(u.id_usuario, u.estado)} className={`btn btn-sm ${u.estado === 'Activo' ? 'btn-outline-danger' : 'btn-outline-success'}`}>
-                                                {u.estado === 'Activo' ? 'Inactivar' : 'Reactivar'}
-                                            </button>
-                                        )}
-                                    </td>
+                    <h5 className="fw-bold mb-4 text-secondary">Resumen Global del Edificio</h5>
+                    
+                    <div className="table-responsive">
+                        <table className="table table-hover align-middle mb-0">
+                            <thead className="table-light text-muted">
+                                <tr>
+                                    <th>Departamento</th>
+                                    <th>Servicio</th>
+                                    <th>Consumo Total Acumulado</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {/* Usamos (resumen || []) por seguridad para evitar pantallas en blanco */}
+                                {(resumen || []).length > 0 ? (
+                                    resumen.map((item, index) => {
+                                        // Lógica para resaltar el mayor y menor consumo
+                                        let colorClase = "";
+                                        if (item.consumoTotal === mayorConsumo && mayorConsumo > 0) colorClase = "table-danger";
+                                        else if (item.consumoTotal === menorConsumo && menorConsumo >= 0 && resumen.length > 1) colorClase = "table-success";
+
+                                        return (
+                                            <tr key={index} className={colorClase}>
+                                                <td className="fw-bold">{item.departamento}</td>
+                                                <td>
+                                                    <span className={`badge ${item.servicio === 'Agua' ? 'bg-info' : 'bg-warning text-dark'}`}>
+                                                        {item.servicio}
+                                                    </span>
+                                                </td>
+                                                <td className="fw-bold">
+                                                    {item.consumoTotal.toFixed(2)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                ) : (
+                                    <tr>
+                                        <td colSpan="3" className="text-center py-4 text-muted">No hay datos suficientes para generar el reporte</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Leyenda de colores estilo Badges */}
+                    <div className="d-flex mt-4 gap-3">
+                        <span className="badge bg-danger py-2 px-3">Mayor Consumo Histórico</span>
+                        <span className="badge bg-success py-2 px-3">Menor Consumo Histórico</span>
+                    </div>
                 </div>
             </div>
         </div>

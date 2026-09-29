@@ -7,7 +7,7 @@ const Inicio = ({ usuario }) => {
       {/* Encabezado de Bienvenida */}
       <div style={{ marginBottom: '2.5rem', textAlign: 'left' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937' }}>
-          👋 Bienvenido, {usuario || 'Usuario'}
+           Bienvenido, {usuario || 'Usuario'}
         </h1>
         <p style={{ color: '#4b5563', marginTop: '0.5rem', fontSize: '1.1rem' }}>
           Resumen general del sistema de monitoreo de agua y luz. ¿Qué deseas hacer hoy?

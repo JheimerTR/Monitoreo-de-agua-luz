@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import Swal from 'sweetalert2';
 
 export default function Dashboard() {
@@ -24,19 +24,17 @@ export default function Dashboard() {
     const [mensajeError, setMensajeError] = useState('');
     const [alerta, setAlerta] = useState(null);
 
-    // Saber quién está conectado
-    const usuarioActivo = localStorage.getItem('usuarioActivo');
 
     useEffect(() => {
         cargarDatos();
     }, []);
 
     const cargarDatos = () => {
-        axios.get('http://localhost:3001/api/departamentos')
+        api.get('/departamentos')
             .then(res => setDepartamentos(res.data))
             .catch(err => console.error(err));
             
-        axios.get('http://localhost:3001/api/consumos')
+        api.get('/consumos')
             .then(res => setHistorial(res.data))
             .catch(err => console.error(err));
     };
@@ -47,7 +45,7 @@ export default function Dashboard() {
         setMensajeError('');
         setAlerta(null);
 
-        axios.post('http://localhost:3001/api/consumos', {
+        api.post('/consumos', {
             id_departamento: idDepartamento,
             servicio,
             lectura: parseFloat(lectura),
@@ -66,9 +64,12 @@ export default function Dashboard() {
         });
     };
 
+    // Escapa texto antes de insertarlo en HTML (prevención de XSS)
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
     const editarConsumo = (item) => {
         const opcionesDeptos = departamentos.map(d => 
-            `<option value="${d.id_departamento}" ${d.id_departamento === item.id_departamento ? 'selected' : ''}>${d.nombre}</option>`
+            `<option value="${d.id_departamento}" ${d.id_departamento === item.id_departamento ? 'selected' : ''}>${esc(d.nombre)}</option>`
         ).join('');
 
         Swal.fire({
@@ -85,10 +86,10 @@ export default function Dashboard() {
                     </select>
 
                     <label class="form-label small fw-bold text-muted">Lectura</label>
-                    <input id="swal-lectura" type="number" step="0.01" min="0" onkeydown="return ['e','E','+','-'].includes(event.key) ? false : true" class="form-control mb-3" value="${item.lectura}">
+                    <input id="swal-lectura" type="number" step="0.01" min="0" onkeydown="return ['e','E','+','-'].includes(event.key) ? false : true" class="form-control mb-3" value="${esc(item.lectura)}">
 
                     <label class="form-label small fw-bold text-muted">Fecha</label>
-                    <input id="swal-fecha" type="date" class="form-control" value="${item.fecha}">
+                    <input id="swal-fecha" type="date" class="form-control" value="${esc(item.fecha)}">
                 </div>
             `,
             showCancelButton: true,
@@ -101,13 +102,12 @@ export default function Dashboard() {
                     id_departamento: document.getElementById('swal-depto').value,
                     servicio: document.getElementById('swal-servicio').value,
                     nueva_lectura: document.getElementById('swal-lectura').value,
-                    fecha_facturacion: document.getElementById('swal-fecha').value,
-                    usuario: usuarioActivo 
+                    fecha_facturacion: document.getElementById('swal-fecha').value
                 }
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                axios.put(`http://localhost:3001/api/consumos/${item.id_consumo}`, result.value)
+                api.put(`/consumos/${item.id_consumo}`, result.value)
                     .then(res => {
                         Swal.fire('¡Actualizado!', res.data.mensaje, 'success');
                         cargarDatos(); 
@@ -122,6 +122,10 @@ export default function Dashboard() {
         setBusqueda(e.target.value);
         setPaginaActual(1); 
     };
+
+    // Icono que indica la columna y dirección del ordenamiento
+    const flecha = (columna) => orden.columna === columna &&
+        <i className={`bi bi-caret-${orden.direccion === 'asc' ? 'up' : 'down'}-fill ms-1`}></i>;
 
     const manejarOrden = (columna) => {
         const direccion = (orden.columna === columna && orden.direccion === 'asc') ? 'desc' : 'asc';
@@ -159,7 +163,7 @@ export default function Dashboard() {
             {/* Alerta de Incremento Atípico */}
             {alerta && (
                 <div className="alert alert-danger shadow-sm d-flex justify-content-between align-items-center" role="alert">
-                    <span><strong>{alerta}</strong></span>
+                    <span><i className="bi bi-exclamation-triangle-fill me-2"></i><strong>{alerta}</strong></span>
                     <button className="btn btn-sm btn-danger" onClick={() => setAlerta(null)}>Entendido</button>
                 </div>
             )}
@@ -206,20 +210,23 @@ export default function Dashboard() {
                     </form>
                     
                     {/* ALERTAS BONITAS */}
-                    {mensajeExito && <div className="alert alert-success mt-3 mb-0 fw-bold text-center">{mensajeExito}</div>}
-                    {mensajeError && <div className="alert alert-danger mt-3 mb-0 fw-bold text-center">❌ {mensajeError}</div>}
+                    {mensajeExito && <div className="alert alert-success mt-3 mb-0 fw-bold text-center"><i className="bi bi-check-circle-fill me-2"></i>{mensajeExito}</div>}
+                    {mensajeError && <div className="alert alert-danger mt-3 mb-0 fw-bold text-center"><i className="bi bi-x-circle-fill me-2"></i>{mensajeError}</div>}
                 </div>
             </div>
 
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h4 className="fw-bold m-0" style={{ color: '#1f2937' }}>Historial Reciente</h4>
-                <input 
-                    type="text" 
-                    className="form-control w-25" 
-                    placeholder="🔍 Buscar..." 
-                    value={busqueda} 
-                    onChange={manejarBusqueda}
-                />
+                <div className="input-group w-25">
+                    <span className="input-group-text bg-white"><i className="bi bi-search"></i></span>
+                    <input 
+                        type="text" 
+                        className="form-control border-start-0" 
+                        placeholder="Buscar..." 
+                        value={busqueda} 
+                        onChange={manejarBusqueda}
+                    />
+                </div>
             </div>
 
             <div className="card sombra-suave border-0 overflow-hidden">
@@ -229,27 +236,27 @@ export default function Dashboard() {
                             {/* TÍTULOS INTERACTIVOS PARA ORDENAR */}
                             <tr>
                                 <th onClick={() => manejarOrden('fecha')} style={{cursor: 'pointer'}} className="user-select-none">
-                                    Fecha {orden.columna === 'fecha' && (orden.direccion === 'asc' ? '↑' : '↓')}
+                                    Fecha {flecha('fecha')}
                                 </th>
                                 <th onClick={() => manejarOrden('departamento')} style={{cursor: 'pointer'}} className="user-select-none">
-                                    Depto {orden.columna === 'departamento' && (orden.direccion === 'asc' ? '↑' : '↓')}
+                                    Depto {flecha('departamento')}
                                 </th>
                                 <th onClick={() => manejarOrden('servicio')} style={{cursor: 'pointer'}} className="user-select-none">
-                                    Servicio {orden.columna === 'servicio' && (orden.direccion === 'asc' ? '↑' : '↓')}
+                                    Servicio {flecha('servicio')}
                                 </th>
                                 <th onClick={() => manejarOrden('lectura')} style={{cursor: 'pointer'}} className="user-select-none">
-                                    Lectura {orden.columna === 'lectura' && (orden.direccion === 'asc' ? '↑' : '↓')}
+                                    Lectura {flecha('lectura')}
                                 </th>
                                 <th onClick={() => manejarOrden('diferencia_absoluta')} style={{cursor: 'pointer'}} className="user-select-none">
-                                    Var. Absoluta {orden.columna === 'diferencia_absoluta' && (orden.direccion === 'asc' ? '↑' : '↓')}
+                                    Var. Absoluta {flecha('diferencia_absoluta')}
                                 </th>
                                 <th onClick={() => manejarOrden('diferencia_porcentual')} style={{cursor: 'pointer'}} className="user-select-none">
-                                    Var. % {orden.columna === 'diferencia_porcentual' && (orden.direccion === 'asc' ? '↑' : '↓')}
+                                    Var. % {flecha('diferencia_porcentual')}
                                 </th>
                                 <th onClick={() => manejarOrden('categoria')} style={{cursor: 'pointer'}} className="user-select-none">
-                                    Categoría {orden.columna === 'categoria' && (orden.direccion === 'asc' ? '↑' : '↓')}
+                                    Categoría {flecha('categoria')}
                                 </th>
-                                {usuarioActivo === 'admin' && <th className="text-end">Acciones</th>}
+                                {localStorage.getItem('rol') === 'admin' && <th className="text-end">Acciones</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -272,12 +279,12 @@ export default function Dashboard() {
                                         </td>
                                         <td>{item.categoria}</td>
                                         
-                                        {usuarioActivo === 'admin' && (
+                                        {localStorage.getItem('rol') === 'admin' && (
                                             <td className="text-end">
                                                <button 
                                                     onClick={() => editarConsumo(item)} 
                                                     className="btn btn-sm btn-outline-primary fw-bold">
-                                                    ✏️ Editar
+                                                    <i className="bi bi-pencil-square me-1"></i>Editar
                                                 </button>
                                             </td>
                                         )}
@@ -306,4 +313,4 @@ export default function Dashboard() {
             )}
         </div>
     );
-}
+}

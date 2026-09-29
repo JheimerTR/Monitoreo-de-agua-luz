@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 export default function Reportes() {
     const [resumen, setResumen] = useState([]);
@@ -12,7 +12,7 @@ export default function Reportes() {
 
     const cargarReportes = () => {
         // Usamos la ruta de historial que ya existe para calcular los totales
-        axios.get('http://localhost:3001/api/consumos')
+        api.get('/consumos')
             .then(res => {
                 const consumos = res.data;
                 
@@ -103,4 +103,4 @@ export default function Reportes() {
             </div>
         </div>
     );
-}
+}

@@ -1,11 +1,13 @@
 services:
   db:
     image: mysql:8.0
+    restart: unless-stopped
+    env_file: .env
     environment:
-      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: monitoreo_bd
+    # Solo accesible desde esta misma PC (para desarrollo); no se expone a la red
     ports:
-      - "3307:3306"
+      - "127.0.0.1:13306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -16,23 +18,39 @@ services:
 
   backend:
     build: ./backend
-    ports:
-      - "3001:3001"
+    restart: unless-stopped
+    env_file: .env
     environment:
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASSWORD=root
-      - DB_NAME=monitoreo_bd
+      DB_HOST: db
+      DB_NAME: monitoreo_bd
+      NODE_ENV: production
+    # Sin "ports": el backend solo es accesible a través de Nginx
+    expose:
+      - "3001"
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
-    build: ./fronted 
+    build: ./fronted
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
       - backend
+
+  # Publica el sitio en un subdominio mediante Cloudflare Tunnel.
+  # Solo se inicia con: docker compose --profile publico up -d
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    profiles:
+      - publico
 
 volumes:
   db_data:

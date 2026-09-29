@@ -16,7 +16,7 @@ const registrarConsumo = (req, res) => {
         "SELECT id_consumo FROM Consumos WHERE id_departamento = ? AND servicio = ? AND MONTH(fecha_facturacion) = MONTH(?) AND YEAR(fecha_facturacion) = YEAR(?)",
         [id_departamento, servicio, fecha_facturacion, fecha_facturacion],
         (err, duplicateResults) => {
-            if (err) return res.status(500).json({ error: err.message });
+            if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
             if (duplicateResults.length > 0) {
                 return res.status(400).json({ error: `Error: Ya existe un registro de ${servicio} para este departamento en este mes.` });
             }
@@ -26,7 +26,7 @@ const registrarConsumo = (req, res) => {
                 "SELECT lectura FROM Consumos WHERE id_departamento = ? AND servicio = ? ORDER BY fecha_facturacion DESC LIMIT 1",
                 [id_departamento, servicio],
                 (err, prevResults) => {
-                    if (err) return res.status(500).json({ error: err.message });
+                    if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
 
                     let lectura_anterior = prevResults.length > 0 ? parseFloat(prevResults[0].lectura) : 0;
                     let diferencia_absoluta = lectura_anterior > 0 ? (lectura - lectura_anterior) : lectura;
@@ -37,7 +37,7 @@ const registrarConsumo = (req, res) => {
                         "SELECT limite_optimo, limite_regular, tarifa_por_unidad FROM Configuracion_Umbrales WHERE servicio = ?",
                         [servicio],
                         (err, umbralResults) => {
-                            if (err) return res.status(500).json({ error: err.message });
+                            if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
 
                             let categoria = 'NO CLASIFICADO';
                             let total_facturado = 0; // NUEVA VARIABLE PARA EL DINERO
@@ -65,7 +65,7 @@ const registrarConsumo = (req, res) => {
                                 "INSERT INTO Consumos (id_departamento, servicio, lectura, fecha_facturacion, diferencia_absoluta, diferencia_porcentual, categoria) VALUES (?, ?, ?, ?, ?, ?, ?)",
                                 [id_departamento, servicio, lectura, fecha_facturacion, diferencia_absoluta, diferencia_porcentual, categoria],
                                 (err, result) => {
-                                    if (err) return res.status(500).json({ error: err.message });
+                                    if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
                                     
                                     // 5. Generar Alertas Suaves
                                     let alerta = null;
@@ -100,18 +100,15 @@ const obtenerHistorial = (req, res) => {
         ORDER BY c.fecha_facturacion DESC
     `;
     db.query(query, (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
         res.json(results);
     });
 };
 
 const modificarConsumo = (req, res) => {
     const { id } = req.params;
-    const { id_departamento, servicio, nueva_lectura, fecha_facturacion, usuario } = req.body;
-
-    if (usuario !== 'admin') {
-        return res.status(403).json({ error: 'Acceso denegado: Operación exclusiva para Súper Administradores.' });
-    }
+    const { id_departamento, servicio, nueva_lectura, fecha_facturacion } = req.body;
+    // El rol de administrador se valida en el middleware soloAdmin (CU33)
 
     if (nueva_lectura < 0) return res.status(400).json({ error: 'La lectura no puede ser negativa' });
 
@@ -119,10 +116,10 @@ const modificarConsumo = (req, res) => {
         "UPDATE Consumos SET id_departamento = ?, servicio = ?, lectura = ?, fecha_facturacion = ? WHERE id_consumo = ?", 
         [id_departamento, servicio, nueva_lectura, fecha_facturacion, id], 
         (err, results) => {
-            if (err) return res.status(500).json({ error: err.message });
+            if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
             res.json({ mensaje: 'Registro modificado exitosamente.' });
         }
     );
 };
 
-module.exports = { registrarConsumo, obtenerHistorial, modificarConsumo };
+module.exports = { registrarConsumo, obtenerHistorial, modificarConsumo };

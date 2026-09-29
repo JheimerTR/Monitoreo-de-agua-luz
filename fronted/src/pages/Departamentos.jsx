@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import Swal from 'sweetalert2';
 
 export default function Departamentos() {
@@ -18,7 +18,7 @@ export default function Departamentos() {
     }, []);
 
     const cargarDepartamentos = () => {
-        axios.get('http://localhost:3001/api/departamentos')
+        api.get('/departamentos')
             .then(res => setDepartamentos(res.data))
             .catch(err => console.error(err));
     };
@@ -26,7 +26,7 @@ export default function Departamentos() {
     const registrar = (e) => {
         e.preventDefault();
         setMensaje('');
-        axios.post('http://localhost:3001/api/departamentos', { nombre, descripcion })
+        api.post('/departamentos', { nombre, descripcion })
             .then(res => {
                 setMensaje(res.data.mensaje);
                 setNombre('');
@@ -54,7 +54,7 @@ export default function Departamentos() {
         }).then((result) => {
             if (result.isConfirmed) {
                 // Si el usuario confirma, hacemos la petición al backend
-                axios.put(`http://localhost:3001/api/departamentos/${id}/estado`)
+                api.put(`/departamentos/${id}/estado`)
                     .then(res => {
                         // Mostramos un mensaje de éxito bonito
                         Swal.fire(
@@ -114,13 +114,16 @@ return (
             {/* Título de lista y Buscador */}
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h4 className="fw-bold m-0" style={{ color: '#1f2937' }}>Departamentos Registrados</h4>
-                <input 
-                    type="text" 
-                    className="form-control w-25" 
-                    placeholder="🔍 Buscar..." 
-                    value={busqueda} 
-                    onChange={manejarBusqueda}
-                />
+                <div className="input-group w-25">
+                    <span className="input-group-text bg-white"><i className="bi bi-search"></i></span>
+                    <input 
+                        type="text" 
+                        className="form-control border-start-0" 
+                        placeholder="Buscar..." 
+                        value={busqueda} 
+                        onChange={manejarBusqueda}
+                    />
+                </div>
             </div>
 
             {/* Tabla Estilizada */}
@@ -183,4 +186,4 @@ return (
         </div>
     );
     
-}
+}

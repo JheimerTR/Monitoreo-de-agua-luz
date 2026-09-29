@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import Swal from 'sweetalert2';
 
 export default function Usuarios() {
@@ -13,14 +13,14 @@ export default function Usuarios() {
     }, []);
 
     const cargarUsuarios = () => {
-        axios.get('http://localhost:3001/api/usuarios')
+        api.get('/usuarios')
             .then(res => setUsuarios(res.data))
             .catch(err => console.error(err));
     };
 
     const registrar = (e) => {
         e.preventDefault();
-        axios.post('http://localhost:3001/api/usuarios', { username, password, rol })
+        api.post('/usuarios', { username, password, rol })
             .then(res => {
                 Swal.fire('¡Éxito!', res.data.mensaje, 'success');
                 setUsername('');
@@ -41,7 +41,7 @@ export default function Usuarios() {
             confirmButtonText: 'Sí, cambiar'
         }).then((result) => {
             if (result.isConfirmed) {
-                axios.put(`http://localhost:3001/api/usuarios/${id}/estado`)
+                api.put(`/usuarios/${id}/estado`)
                     .then(res => {
                         Swal.fire('Actualizado', res.data.mensaje, 'success');
                         cargarUsuarios();
@@ -52,7 +52,7 @@ export default function Usuarios() {
     };
 
     const desbloquear = (id) => {
-        axios.put(`http://localhost:3001/api/usuarios/${id}/desbloquear`)
+        api.put(`/usuarios/${id}/desbloquear`)
             .then(res => {
                 Swal.fire('¡Desbloqueado!', res.data.mensaje, 'success');
                 cargarUsuarios();
@@ -113,7 +113,7 @@ export default function Usuarios() {
                                     <td className="text-end">
                                         {u.intentos_fallidos >= 3 && (
                                             <button onClick={() => desbloquear(u.id_usuario)} className="btn btn-sm btn-warning me-2 fw-bold">
-                                                🔓 Desbloquear
+                                                <i className="bi bi-unlock me-1"></i>Desbloquear
                                             </button>
                                         )}
                                         {u.username !== 'admin' && ( // Protegemos al admin principal para que no se borre a sí mismo
@@ -130,4 +130,4 @@ export default function Usuarios() {
             </div>
         </div>
     );
-}
+}

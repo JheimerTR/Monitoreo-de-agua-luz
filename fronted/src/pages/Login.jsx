@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 export default function Login({ onLogin }) {
     const [username, setUsername] = useState('');
@@ -10,10 +10,12 @@ export default function Login({ onLogin }) {
         e.preventDefault();
         setError('');
 
-        axios.post('http://localhost:3001/api/auth/login', { username, password })
+        api.post('/auth/login', { username, password })
             .then(res => {
                 // Almacenamos la sesión en el navegador (RF12)
                 localStorage.setItem('usuarioActivo', res.data.username);
+                localStorage.setItem('rol', res.data.rol);
+                localStorage.setItem('token', res.data.token);
                 onLogin(true); // Cambiamos el estado en App.jsx para darle acceso
             })
             .catch(err => {
@@ -27,7 +29,7 @@ export default function Login({ onLogin }) {
                 
                 <div className="text-center mb-4 mt-2">
                     <div className="mb-3">
-                        <span style={{ fontSize: '3rem' }}>💧⚡</span>
+                        <span style={{ fontSize: '3rem' }}><i className="bi bi-droplet-half text-info"></i><i className="bi bi-lightning-charge-fill text-warning"></i></span>
                     </div>
                     <h3 className="fw-bold" style={{ color: '#1f2937' }}>Sistema de Monitoreo</h3>
                     <p className="text-muted small">Ingresa tus credenciales para acceder al panel</p>
@@ -72,4 +74,4 @@ export default function Login({ onLogin }) {
             </div>
         </div>
     );
-}
+}

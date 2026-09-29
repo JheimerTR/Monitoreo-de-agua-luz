@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const login = (req, res) => {
     const { username, password } = req.body;
@@ -9,10 +10,16 @@ const login = (req, res) => {
     }
 
     db.query("SELECT * FROM Usuarios WHERE username = ?", [username], (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
         if (results.length === 0) return res.status(401).json({ error: 'Credenciales inválidas' });
 
         const usuario = results[0];
+
+        // Usuarios inactivados por el administrador no pueden ingresar (CU30)
+        if (usuario.estado !== 'Activo') return res.status(403).json({ error: 'Cuenta inactiva. Contacte al administrador.' });
+
+        // Si el bloqueo ya expiró, el contador vuelve a cero (CU28 - 4A)
+        if (usuario.bloqueado_hasta && new Date(usuario.bloqueado_hasta) <= new Date()) usuario.intentos_fallidos = 0;
 
         if (usuario.bloqueado_hasta && new Date(usuario.bloqueado_hasta) > new Date()) {
             return res.status(403).json({ error: 'Cuenta bloqueada por múltiples intentos fallidos.' });
@@ -33,8 +40,13 @@ const login = (req, res) => {
         }
 
         db.query("UPDATE Usuarios SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id_usuario = ?", [usuario.id_usuario]);
-        res.json({ mensaje: 'Inicio de sesión exitoso', username: usuario.username });
+        const token = jwt.sign(
+            { id: usuario.id_usuario, username: usuario.username, rol: usuario.rol },
+            process.env.JWT_SECRET,
+            { expiresIn: '8h' }
+        );
+        res.json({ mensaje: 'Inicio de sesión exitoso', username: usuario.username, rol: usuario.rol, token });
     });
 };
 
-module.exports = { login };
+module.exports = { login };

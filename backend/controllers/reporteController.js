@@ -14,9 +14,9 @@ const obtenerResumenGlobal = (req, res) => {
     `;
     
     db.query(query, (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
         res.json(results);
     });
 };
 
-module.exports = { obtenerResumenGlobal };
+module.exports = { obtenerResumenGlobal };

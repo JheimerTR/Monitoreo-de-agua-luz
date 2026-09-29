@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const obtenerUsuarios = (req, res) => {
     // No devolvemos las contraseñas por seguridad
     db.query("SELECT id_usuario, username, rol, estado, intentos_fallidos FROM Usuarios ORDER BY rol ASC, username ASC", (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
         res.json(results);
     });
 };
@@ -15,6 +15,10 @@ const registrarUsuario = async (req, res) => {
     if (!username || !password) {
         return res.status(400).json({ error: 'Usuario y contraseña son obligatorios' });
     }
+    if (password.length < 8) {
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
+    }
+    const rolValido = ['admin', 'operador'].includes(rol) ? rol : 'operador';
     
     try {
         // Encriptamos la contraseña antes de guardarla
@@ -23,11 +27,11 @@ const registrarUsuario = async (req, res) => {
 
         db.query(
             "INSERT INTO Usuarios (username, password_hash, rol, estado, intentos_fallidos) VALUES (?, ?, ?, 'Activo', 0)",
-            [username, password_encriptada, rol || 'operador'],
+            [username, password_encriptada, rolValido],
             (err, results) => {
                 if (err) {
                     if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'El nombre de usuario ya existe' });
-                    return res.status(500).json({ error: err.message });
+                    { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
                 }
                 res.json({ mensaje: 'Usuario registrado exitosamente' });
             }
@@ -44,7 +48,7 @@ const cambiarEstado = (req, res) => {
         "UPDATE Usuarios SET estado = IF(estado = 'Activo', 'Inactivo', 'Activo') WHERE id_usuario = ?",
         [id],
         (err) => {
-            if (err) return res.status(500).json({ error: err.message });
+            if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
             res.json({ mensaje: 'Estado de acceso actualizado' });
         }
     );
@@ -53,13 +57,13 @@ const cambiarEstado = (req, res) => {
 const desbloquearUsuario = (req, res) => {
     const { id } = req.params;
     db.query(
-        "UPDATE Usuarios SET intentos_fallidos = 0 WHERE id_usuario = ?", 
+        "UPDATE Usuarios SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id_usuario = ?", 
         [id], 
         (err) => {
-            if (err) return res.status(500).json({ error: err.message });
+            if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
             res.json({ mensaje: 'Cuenta desbloqueada correctamente' });
         }
     );
 };
 
-module.exports = { obtenerUsuarios, registrarUsuario, cambiarEstado, desbloquearUsuario };
+module.exports = { obtenerUsuarios, registrarUsuario, cambiarEstado, desbloquearUsuario };

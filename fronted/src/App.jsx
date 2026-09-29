@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from './api';
 
 import Inicio from './pages/Inicio'; // <-- NUEVO
 import Departamentos from './pages/Departamentos';
@@ -29,29 +29,29 @@ function LayoutPrincipal({ usuario, cerrarSesion, mensajeBackend }) {
         <div className="col-auto col-md-3 col-xl-2 px-0" style={{ backgroundColor: '#111827', minHeight: '100vh' }}>
           <div className="d-flex flex-column align-items-center align-items-sm-start pt-4 text-white min-vh-100">
             <Link to="/" className="d-flex align-items-center pb-4 px-4 me-md-auto text-white text-decoration-none w-100 border-bottom border-secondary">
-              <span className="fs-5 d-none d-sm-inline fw-bold text-warning">💧⚡ Monitoreo</span>
+              <span className="fs-5 d-none d-sm-inline fw-bold text-warning"><i className="bi bi-droplet-half me-1"></i><i className="bi bi-lightning-charge-fill me-2"></i>Monitoreo</span>
             </Link>
             
             <ul className="nav flex-column mb-sm-auto mb-0 w-100 mt-3" id="menu">
               <li className="nav-item w-100 pr-2">
                 <Link to="/dashboard" className={claseActiva('/dashboard')}>
-                  <span className="ms-2 d-none d-sm-inline">📊 Panel General</span>
+                  <i className="bi bi-speedometer2"></i><span className="ms-2 d-none d-sm-inline">Panel General</span>
                 </Link>
               </li>
               <li className="nav-item w-100 pr-2">
                 <Link to="/departamentos" className={claseActiva('/departamentos')}>
-                  <span className="ms-2 d-none d-sm-inline">🏢 Departamentos</span>
+                  <i className="bi bi-building"></i><span className="ms-2 d-none d-sm-inline">Departamentos</span>
                 </Link>
               </li>
               <li className="nav-item w-100 pr-2">
                 <Link to="/reportes" className={claseActiva('/reportes')}>
-                  <span className="ms-2 d-none d-sm-inline">📈 Reportes</span>
+                  <i className="bi bi-bar-chart-line"></i><span className="ms-2 d-none d-sm-inline">Reportes</span>
                 </Link>
               </li>
-              {usuario === 'admin' && (
+              {localStorage.getItem('rol') === 'admin' && (
                   <li className="nav-item w-100 pr-2">
                     <Link to="/usuarios" className={claseActiva('/usuarios')}>
-                      <span className="ms-2 d-none d-sm-inline">👥 Usuarios</span>
+                      <i className="bi bi-people"></i><span className="ms-2 d-none d-sm-inline">Usuarios</span>
                     </Link>
                   </li>
                   )}
@@ -59,10 +59,10 @@ function LayoutPrincipal({ usuario, cerrarSesion, mensajeBackend }) {
             
             <div className="p-3 w-100 border-top border-secondary">
               <div className="mb-3 text-center text-sm-start text-secondary">
-                <small>Admin: <strong className="text-white">{usuario}</strong></small>
+                <small>{localStorage.getItem('rol') === 'admin' ? 'Admin' : 'Operador'}: <strong className="text-white">{usuario}</strong></small>
               </div>
               <button className="btn btn-outline-danger w-100 btn-sm" onClick={cerrarSesion}>
-                Cerrar Sesión
+                <i className="bi bi-box-arrow-right me-1"></i>Cerrar Sesión
               </button>
             </div>
           </div>
@@ -75,7 +75,7 @@ function LayoutPrincipal({ usuario, cerrarSesion, mensajeBackend }) {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/departamentos" element={<Departamentos />} />
             <Route path="/reportes" element={<Reportes />} />
-            <Route path="/usuarios" element={usuario === 'admin' ? <Usuarios /> : <Inicio />} />
+            <Route path="/usuarios" element={localStorage.getItem('rol') === 'admin' ? <Usuarios /> : <Inicio />} />
           </Routes>
         </div>
 
@@ -92,7 +92,7 @@ export default function App() {
   useEffect(() => {
     const usuarioGuardado = localStorage.getItem('usuarioActivo');
     if (usuarioGuardado) { setEstaAutenticado(true); setUsuario(usuarioGuardado); }
-    axios.get('http://localhost:3001/api/test')
+    api.get('/test')
       .then(res => setMensajeBackend(res.data.mensaje))
       .catch(err => setMensajeBackend('Error de conexión'));
   }, []);
@@ -103,7 +103,7 @@ export default function App() {
   };
 
   const cerrarSesion = () => {
-    localStorage.removeItem('usuarioActivo');
+    localStorage.clear();
     setEstaAutenticado(false);
     setUsuario('');
   };
@@ -115,4 +115,4 @@ export default function App() {
       <LayoutPrincipal usuario={usuario} cerrarSesion={cerrarSesion} mensajeBackend={mensajeBackend} />
     </Router>
   );
-}
+}

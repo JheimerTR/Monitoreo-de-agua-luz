@@ -1,0 +1,9 @@
+# Dependencias
+node_modules/
+
+# Secretos
+.env
+!.env.example
+
+# Builds
+dist/

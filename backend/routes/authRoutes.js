@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { login, crearAdmin } = require('../controllers/authController');
+const authController = require('../controllers/authController');
 
-router.post('/login', login);
-router.get('/setup', crearAdmin); // Ruta para autogenerar el usuario
+// Solo dejamos la ruta del login
+router.post('/login', authController.login);
 
 module.exports = router;

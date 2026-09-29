@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Reportes from './pages/Reportes';
 import Login from './pages/Login'; 
 import Usuarios from './pages/Usuarios';
+import FormularioRegistro from "./pages/FormularioRegistro";
 
 // Sub-componente para gestionar el layout y la ruta activa
 function LayoutPrincipal({ usuario, cerrarSesion, mensajeBackend }) {

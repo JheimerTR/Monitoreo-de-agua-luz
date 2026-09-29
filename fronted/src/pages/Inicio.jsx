@@ -23,7 +23,7 @@ const Inicio = ({ usuario }) => {
         
         {/* Tarjeta 1: Consumos */}
         <Link to="/dashboard" style={cardStyle}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>💧⚡</div>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}></div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#111827' }}>Registrar Consumo</h2>
           <p style={{ color: '#6b7280', fontSize: '0.9rem', marginTop: '0.5rem' }}>
             Añade nuevas lecturas mensuales y revisa el historial reciente de variaciones.
@@ -32,7 +32,7 @@ const Inicio = ({ usuario }) => {
 
         {/* Tarjeta 2: Departamentos */}
         <Link to="/departamentos" style={cardStyle}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🏢</div>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}></div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#111827' }}>Departamentos</h2>
           <p style={{ color: '#6b7280', fontSize: '0.9rem', marginTop: '0.5rem' }}>
             Gestiona la información de los inquilinos, familias y locales comerciales.
@@ -41,7 +41,7 @@ const Inicio = ({ usuario }) => {
 
         {/* Tarjeta 3: Reportes */}
         <Link to="/reportes" style={cardStyle}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📊</div>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}></div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#111827' }}>Ver Reportes</h2>
           <p style={{ color: '#6b7280', fontSize: '0.9rem', marginTop: '0.5rem' }}>
             Genera estadísticas detalladas y descarga los informes de facturación.

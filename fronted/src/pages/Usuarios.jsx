@@ -13,14 +13,14 @@ export default function Usuarios() {
     }, []);
 
     const cargarUsuarios = () => {
-        axios.get('http://localhost:3001/api/usuarios')
+        axios.get('https://monitoreo-de-agua-luz.onrender.com/api/usuarios')
             .then(res => setUsuarios(res.data))
             .catch(err => console.error(err));
     };
 
     const registrar = (e) => {
         e.preventDefault();
-        axios.post('http://localhost:3001/api/usuarios', { username, password, rol })
+        axios.post('https://monitoreo-de-agua-luz.onrender.com/api/usuarios', { username, password, rol })
             .then(res => {
                 Swal.fire('¡Éxito!', res.data.mensaje, 'success');
                 setUsername('');
@@ -41,7 +41,7 @@ export default function Usuarios() {
             confirmButtonText: 'Sí, cambiar'
         }).then((result) => {
             if (result.isConfirmed) {
-                axios.put(`http://localhost:3001/api/usuarios/${id}/estado`)
+                axios.put(`https://monitoreo-de-agua-luz.onrender.com/api/usuarios/${id}/estado`)
                     .then(res => {
                         Swal.fire('Actualizado', res.data.mensaje, 'success');
                         cargarUsuarios();
@@ -52,7 +52,7 @@ export default function Usuarios() {
     };
 
     const desbloquear = (id) => {
-        axios.put(`http://localhost:3001/api/usuarios/${id}/desbloquear`)
+        axios.put(`https://monitoreo-de-agua-luz.onrender.com/api/usuarios/${id}/desbloquear`)
             .then(res => {
                 Swal.fire('¡Desbloqueado!', res.data.mensaje, 'success');
                 cargarUsuarios();

@@ -10,7 +10,7 @@ export default function Login({ onLogin }) {
         e.preventDefault();
         setError('');
 
-        axios.post('http://localhost:3001/api/auth/login', { username, password })
+        axios.post('https://monitoreo-de-agua-luz.onrender.com/api/auth/login', { username, password })
             .then(res => {
                 // Almacenamos la sesión en el navegador (RF12)
                 localStorage.setItem('usuarioActivo', res.data.username);

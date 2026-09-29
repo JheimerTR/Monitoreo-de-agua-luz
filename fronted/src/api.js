@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Cliente HTTP único: agrega el token JWT a cada petición
-const api = axios.create({ baseURL: '/api' });
+// Cliente HTTP único: agrega el token JWT a cada petición.
+// En Docker usa /api (Nginx); en Render se define VITE_API_URL con la URL del backend.
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' });
 
 api.interceptors.request.use(cfg => {
     const token = localStorage.getItem('token');

@@ -71,11 +71,11 @@ function LayoutPrincipal({ usuario, cerrarSesion, mensajeBackend }) {
         {/* ÁREA DE CONTENIDO */}
         <div className="col py-4 px-4">
           <Routes>
-            <Route path="/" element={<Inicio />} />
+            <Route path="/" element={<Inicio usuario={usuario} />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/departamentos" element={<Departamentos />} />
             <Route path="/reportes" element={<Reportes />} />
-            <Route path="/usuarios" element={localStorage.getItem('rol') === 'admin' ? <Usuarios /> : <Inicio />} />
+            <Route path="/usuarios" element={localStorage.getItem('rol') === 'admin' ? <Usuarios /> : <Inicio usuario={usuario} />} />
           </Routes>
         </div>
 

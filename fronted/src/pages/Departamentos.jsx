@@ -18,7 +18,7 @@ export default function Departamentos() {
     }, []);
 
     const cargarDepartamentos = () => {
-        axios.get('http://localhost:3001/api/departamentos')
+        axios.get('https://monitoreo-de-agua-luz.onrender.com/api/departamentos')
             .then(res => setDepartamentos(res.data))
             .catch(err => console.error(err));
     };
@@ -26,7 +26,7 @@ export default function Departamentos() {
     const registrar = (e) => {
         e.preventDefault();
         setMensaje('');
-        axios.post('http://localhost:3001/api/departamentos', { nombre, descripcion })
+        axios.post('https://monitoreo-de-agua-luz.onrender.com/api/departamentos', { nombre, descripcion })
             .then(res => {
                 setMensaje(res.data.mensaje);
                 setNombre('');
@@ -54,7 +54,7 @@ export default function Departamentos() {
         }).then((result) => {
             if (result.isConfirmed) {
                 // Si el usuario confirma, hacemos la petición al backend
-                axios.put(`http://localhost:3001/api/departamentos/${id}/estado`)
+                axios.put(`https://monitoreo-de-agua-luz.onrender.com/api/departamentos/${id}/estado`)
                     .then(res => {
                         // Mostramos un mensaje de éxito bonito
                         Swal.fire(

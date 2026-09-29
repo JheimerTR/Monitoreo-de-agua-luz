@@ -32,11 +32,11 @@ export default function Dashboard() {
     }, []);
 
     const cargarDatos = () => {
-        axios.get('http://localhost:3001/api/departamentos')
+        axios.get('https://monitoreo-de-agua-luz.onrender.com/api/departamentos')
             .then(res => setDepartamentos(res.data))
             .catch(err => console.error(err));
             
-        axios.get('http://localhost:3001/api/consumos')
+        axios.get('https://monitoreo-de-agua-luz.onrender.com/api/consumos')
             .then(res => setHistorial(res.data))
             .catch(err => console.error(err));
     };
@@ -47,14 +47,14 @@ export default function Dashboard() {
         setMensajeError('');
         setAlerta(null);
 
-        axios.post('http://localhost:3001/api/consumos', {
+        axios.post('https://monitoreo-de-agua-luz.onrender.com/api/consumos', {
             id_departamento: idDepartamento,
             servicio,
             lectura: parseFloat(lectura),
             fecha_facturacion: fecha
         })
         .then(res => {
-            setMensajeExito(`${res.data.mensaje} - Categoría: ${res.data.categoria}`);
+            setMensajeExito(`${res.data.mensaje}Categoría: ${res.data.categoria}`);
             if (res.data.alerta) setAlerta(res.data.alerta);
             setLectura('');
             setFecha('');
@@ -107,7 +107,7 @@ export default function Dashboard() {
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                axios.put(`http://localhost:3001/api/consumos/${item.id_consumo}`, result.value)
+                axios.put(`https://monitoreo-de-agua-luz.onrender.com/api/consumos/${item.id_consumo}`, result.value)
                     .then(res => {
                         Swal.fire('¡Actualizado!', res.data.mensaje, 'success');
                         cargarDatos(); 

@@ -13,8 +13,8 @@ const modulos = [
         ruta: '/departamentos',
         icono: 'bi-building',
         color: '#3b82f6',
-        titulo: 'Departamentos',
-        texto: 'Gestiona los departamentos, familias y locales comerciales monitoreados.'
+        titulo: 'Unidades',
+        texto: 'Gestiona departamentos, locales comerciales y áreas comunes (piscina, bombas, ascensor).'
     },
     {
         ruta: '/reportes',

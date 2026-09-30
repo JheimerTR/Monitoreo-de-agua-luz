@@ -1,7 +1,8 @@
 -- =====================================================
 -- DATOS DE PRUEBA PARA LOS GRÁFICOS (oct-2025 a sep-2026)
--- Edificio de 20 unidades: 18 departamentos + 2 locales comerciales.
--- Ejecutar DESPUÉS de init.sql. Se puede correr varias veces:
+-- Edificio de 20 unidades: 18 departamentos + 2 locales comerciales,
+-- más 5 áreas comunes (piscina, bombas, ascensor, pasillos, jardín).
+-- Ejecutar DESPUÉS de init.sql y de migracion_areas_comunes.sql. Se puede correr varias veces:
 -- no duplica departamentos ni meses ya registrados.
 -- "lectura" = consumo del mes (m³ agua / kWh luz)
 -- =====================================================
@@ -37,6 +38,9 @@ SELECT t.nombre, t.descripcion FROM tmp_deptos t
 WHERE NOT EXISTS (SELECT 1 FROM Departamentos d WHERE d.nombre = t.nombre);
 
 DROP TEMPORARY TABLE tmp_deptos;
+
+-- Los locales comerciales se marcan como tipo "Local" (columna creada por migracion_areas_comunes.sql)
+UPDATE Departamentos SET tipo = 'Local' WHERE tipo = 'Departamento' AND nombre LIKE 'Local%';
 
 -- 2. Consumos mensuales
 CREATE TEMPORARY TABLE tmp_consumos (
@@ -536,6 +540,121 @@ WHERE NOT EXISTS (
 );
 
 DROP TEMPORARY TABLE tmp_consumos;
+
+-- 2b. Consumos de las áreas comunes (requiere migracion_areas_comunes.sql)
+CREATE TEMPORARY TABLE tmp_areas (
+    departamento VARCHAR(50), servicio VARCHAR(10), lectura DECIMAL(10,2), fecha DATE
+);
+
+INSERT INTO tmp_areas VALUES
+('Piscina','Agua',36.03,'2025-10-05'),
+('Piscina','Luz',507.33,'2025-10-05'),
+('Piscina','Agua',37.07,'2025-11-05'),
+('Piscina','Luz',597.83,'2025-11-05'),
+('Piscina','Agua',39.54,'2025-12-05'),
+('Piscina','Luz',608.04,'2025-12-05'),
+('Piscina','Agua',44.71,'2026-01-05'),
+('Piscina','Luz',633.73,'2026-01-05'),
+('Piscina','Agua',39.8,'2026-02-05'),
+('Piscina','Luz',621.23,'2026-02-05'),
+('Piscina','Agua',39.1,'2026-03-05'),
+('Piscina','Luz',600.12,'2026-03-05'),
+('Piscina','Agua',30.79,'2026-04-05'),
+('Piscina','Luz',553.28,'2026-04-05'),
+('Piscina','Agua',27.01,'2026-05-05'),
+('Piscina','Luz',488.53,'2026-05-05'),
+('Piscina','Agua',25.2,'2026-06-05'),
+('Piscina','Luz',450.14,'2026-06-05'),
+('Piscina','Agua',22.29,'2026-07-05'),
+('Piscina','Luz',405.6,'2026-07-05'),
+('Piscina','Agua',23.09,'2026-08-05'),
+('Piscina','Luz',446.71,'2026-08-05'),
+('Piscina','Agua',40.73,'2026-09-05'),
+('Piscina','Luz',448.67,'2026-09-05'),
+('Bombas de agua','Luz',373.17,'2025-10-05'),
+('Bombas de agua','Luz',385.48,'2025-11-05'),
+('Bombas de agua','Luz',405.98,'2025-12-05'),
+('Bombas de agua','Luz',432.61,'2026-01-05'),
+('Bombas de agua','Luz',420.08,'2026-02-05'),
+('Bombas de agua','Luz',421.21,'2026-03-05'),
+('Bombas de agua','Luz',366.87,'2026-04-05'),
+('Bombas de agua','Luz',388.11,'2026-05-05'),
+('Bombas de agua','Luz',380.27,'2026-06-05'),
+('Bombas de agua','Luz',362.78,'2026-07-05'),
+('Bombas de agua','Luz',368.35,'2026-08-05'),
+('Bombas de agua','Luz',388.64,'2026-09-05'),
+('Ascensor','Luz',320.72,'2025-10-05'),
+('Ascensor','Luz',343.23,'2025-11-05'),
+('Ascensor','Luz',328.29,'2025-12-05'),
+('Ascensor','Luz',364.0,'2026-01-05'),
+('Ascensor','Luz',350.69,'2026-02-05'),
+('Ascensor','Luz',326.09,'2026-03-05'),
+('Ascensor','Luz',337.37,'2026-04-05'),
+('Ascensor','Luz',347.88,'2026-05-05'),
+('Ascensor','Luz',333.58,'2026-06-05'),
+('Ascensor','Luz',312.32,'2026-07-05'),
+('Ascensor','Luz',351.42,'2026-08-05'),
+('Ascensor','Luz',314.1,'2026-09-05'),
+('Pasillos y escaleras','Agua',6.41,'2025-10-05'),
+('Pasillos y escaleras','Luz',223.94,'2025-10-05'),
+('Pasillos y escaleras','Agua',6.46,'2025-11-05'),
+('Pasillos y escaleras','Luz',214.18,'2025-11-05'),
+('Pasillos y escaleras','Agua',6.3,'2025-12-05'),
+('Pasillos y escaleras','Luz',187.77,'2025-12-05'),
+('Pasillos y escaleras','Agua',6.27,'2026-01-05'),
+('Pasillos y escaleras','Luz',199.64,'2026-01-05'),
+('Pasillos y escaleras','Agua',6.6,'2026-02-05'),
+('Pasillos y escaleras','Luz',192.29,'2026-02-05'),
+('Pasillos y escaleras','Agua',6.7,'2026-03-05'),
+('Pasillos y escaleras','Luz',188.48,'2026-03-05'),
+('Pasillos y escaleras','Agua',5.99,'2026-04-05'),
+('Pasillos y escaleras','Luz',196.46,'2026-04-05'),
+('Pasillos y escaleras','Agua',5.68,'2026-05-05'),
+('Pasillos y escaleras','Luz',233.36,'2026-05-05'),
+('Pasillos y escaleras','Agua',5.3,'2026-06-05'),
+('Pasillos y escaleras','Luz',239.82,'2026-06-05'),
+('Pasillos y escaleras','Agua',6.16,'2026-07-05'),
+('Pasillos y escaleras','Luz',232.78,'2026-07-05'),
+('Pasillos y escaleras','Agua',5.23,'2026-08-05'),
+('Pasillos y escaleras','Luz',223.65,'2026-08-05'),
+('Pasillos y escaleras','Agua',6.07,'2026-09-05'),
+('Pasillos y escaleras','Luz',206.02,'2026-09-05'),
+('Jardín y riego','Agua',23.03,'2025-10-05'),
+('Jardín y riego','Luz',70.71,'2025-10-05'),
+('Jardín y riego','Agua',21.16,'2025-11-05'),
+('Jardín y riego','Luz',77.38,'2025-11-05'),
+('Jardín y riego','Agua',18.14,'2025-12-05'),
+('Jardín y riego','Luz',74.27,'2025-12-05'),
+('Jardín y riego','Agua',15.84,'2026-01-05'),
+('Jardín y riego','Luz',66.88,'2026-01-05'),
+('Jardín y riego','Agua',16.66,'2026-02-05'),
+('Jardín y riego','Luz',74.37,'2026-02-05'),
+('Jardín y riego','Agua',20.81,'2026-03-05'),
+('Jardín y riego','Luz',68.28,'2026-03-05'),
+('Jardín y riego','Agua',21.64,'2026-04-05'),
+('Jardín y riego','Luz',70.68,'2026-04-05'),
+('Jardín y riego','Agua',30.59,'2026-05-05'),
+('Jardín y riego','Luz',72.71,'2026-05-05'),
+('Jardín y riego','Agua',30.59,'2026-06-05'),
+('Jardín y riego','Luz',77.98,'2026-06-05'),
+('Jardín y riego','Agua',34.89,'2026-07-05'),
+('Jardín y riego','Luz',74.73,'2026-07-05'),
+('Jardín y riego','Agua',29.78,'2026-08-05'),
+('Jardín y riego','Luz',81.23,'2026-08-05'),
+('Jardín y riego','Agua',25.86,'2026-09-05'),
+('Jardín y riego','Luz',73.26,'2026-09-05');
+
+INSERT INTO Consumos (id_departamento, servicio, lectura, fecha_facturacion)
+SELECT d.id_departamento, t.servicio, t.lectura, t.fecha
+FROM tmp_areas t
+JOIN Departamentos d ON d.nombre = t.departamento AND d.tipo = 'Área común'
+WHERE NOT EXISTS (
+    SELECT 1 FROM Consumos c
+    WHERE c.id_departamento = d.id_departamento AND c.servicio = t.servicio
+      AND YEAR(c.fecha_facturacion) = YEAR(t.fecha) AND MONTH(c.fecha_facturacion) = MONTH(t.fecha)
+);
+
+DROP TEMPORARY TABLE tmp_areas;
 
 -- 3. Recalcular categoría según umbrales
 UPDATE Consumos c

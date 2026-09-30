@@ -1,8 +1,11 @@
 const db = require('../config/db');
 
+// Tipos de unidad del edificio
+const TIPOS = ['Departamento', 'Local', 'Área común'];
+
 const obtenerDepartamentos = (req, res) => {
     // Ordenamos para que los Activos salgan primero
-    db.query("SELECT * FROM Departamentos ORDER BY estado ASC, nombre ASC", (err, results) => {
+    db.query("SELECT * FROM Departamentos ORDER BY estado ASC, FIELD(tipo, 'Departamento', 'Local', 'Área común'), nombre ASC", (err, results) => {
         if (err) { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
         res.json(results);
     });
@@ -10,21 +13,25 @@ const obtenerDepartamentos = (req, res) => {
 
 const registrarDepartamento = (req, res) => {
     const { nombre, descripcion } = req.body;
+    const tipo = req.body.tipo || 'Departamento';
     if (!nombre || nombre.trim() === '') {
         return res.status(400).json({ error: 'El nombre del departamento es requerido' });
     }
     if (nombre.length > 50 || /[<>]/.test(nombre) || (descripcion && (descripcion.length > 255 || /[<>]/.test(descripcion)))) {
         return res.status(400).json({ error: 'Nombre o descripción con caracteres o longitud no permitidos' });
     }
+    if (!TIPOS.includes(tipo)) {
+        return res.status(400).json({ error: 'Tipo de unidad inválido' });
+    }
     db.query(
-        "INSERT INTO Departamentos (nombre, descripcion, estado) VALUES (?, ?, 'Activo')",
-        [nombre, descripcion],
+        "INSERT INTO Departamentos (nombre, tipo, descripcion, estado) VALUES (?, ?, ?, 'Activo')",
+        [nombre, tipo, descripcion],
         (err, results) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'El departamento ya está registrado' });
                 { console.error(err); return res.status(500).json({ error: 'Error interno del servidor' }); }
             }
-            res.json({ id: results.insertId, mensaje: 'Departamento creado exitosamente' });
+            res.json({ id: results.insertId, mensaje: `${tipo} creado exitosamente` });
         }
     );
 };

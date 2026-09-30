@@ -103,7 +103,7 @@ export function GraficoPorDepartamento({ datos }) {
         corto: d.departamento.replace(/^Apto\s*/i, '').replace(/^Local Comercial/i, 'Local')
     }));
     return (
-        <Tarjeta titulo={`Consumo por departamento — ${nombreMes(datos?.mesActual)}`}>
+        <Tarjeta titulo={`Consumo por departamento y local — ${nombreMes(datos?.mesActual)}`}>
             {data.length === 0 ? <SinDatos /> : (
                 <ResponsiveContainer width="100%" height={320}>
                     <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 10 }} barCategoryGap="15%">
@@ -135,7 +135,7 @@ export function GraficoCategorias({ datos }) {
     const optimo = total ? Math.round(((agrupado['ÓPTIMO'] || 0) / total) * 100) : 0;
 
     return (
-        <Tarjeta titulo="Consumo responsable (últimos 12 meses)">
+        <Tarjeta titulo="Consumo responsable de las unidades (12 meses)">
             <div className="btn-group btn-group-sm mb-2" role="group">
                 {['Todos', 'Agua', 'Luz'].map(s => (
                     <button key={s} type="button"
@@ -253,6 +253,99 @@ export function ComparativoMensual({ datos }) {
                             </button>
                         </div>
                     )}
+                </div>
+            )}
+        </Tarjeta>
+    );
+}
+
+// =====================================================
+// ÁREAS COMUNES (piscina, bombas, ascensor, pasillos, jardín)
+// =====================================================
+const COLOR_TIPO = { 'Departamento': '#3b82f6', 'Local': '#f59e0b', 'Área común': '#10b981' };
+const NOMBRE_TIPO = { 'Departamento': 'Departamentos', 'Local': 'Locales', 'Área común': 'Áreas comunes' };
+
+// ---------- 7. TARJETAS: costo de áreas comunes y prorrateo ----------
+export function ResumenAreasComunes({ datos }) {
+    const ac = datos?.areasComunes;
+    if (!ac || ac.areas.length === 0) return null;
+    const items = [
+        { titulo: '🌳 Costo de áreas comunes', valor: fmtBs(ac.costoTotal), nota: `${nombreMes(datos.mesActual)} · ${ac.areas.length} áreas`, color: COLOR_TIPO['Área común'] },
+        { titulo: '📊 Parte del costo del edificio', valor: `${fmt(ac.porcentajeDelEdificio)}%`, nota: 'del agua y luz de todo el edificio', color: '#6366f1' },
+        { titulo: '🏠 Prorrateo por unidad', valor: fmtBs(ac.prorrateoPorUnidad), nota: `repartido entre ${ac.unidades} unidades`, color: COLORES.luz }
+    ];
+    return (
+        <div className="row g-3 mb-4">
+            {items.map(it => (
+                <div className="col-md-4" key={it.titulo}>
+                    <div className="card sombra-suave border-0 h-100" style={{ borderLeft: `4px solid ${it.color}` }}>
+                        <div className="card-body">
+                            <div className="text-muted small fw-bold">{it.titulo}</div>
+                            <div className="fs-4 fw-bold" style={{ color: '#1f2937' }}>{it.valor}</div>
+                            <small className="text-muted">{it.nota}</small>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// ---------- 8. BARRAS HORIZONTALES: costo por área común ----------
+export function GraficoAreasComunes({ datos }) {
+    const areas = datos?.areasComunes?.areas || [];
+    return (
+        <Tarjeta titulo={`Costo por área común — ${nombreMes(datos?.mesActual)}`}>
+            {areas.length === 0 ? <SinDatos /> : (
+                <ResponsiveContainer width="100%" height={Math.max(220, areas.length * 52)}>
+                    <BarChart data={areas} layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                        <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={v => `Bs ${fmt(v, 0)}`} />
+                        <YAxis type="category" dataKey="area" width={130} tick={{ fontSize: 12 }} />
+                        <Tooltip
+                            formatter={(v, n, p) => {
+                                const a = p.payload;
+                                const detalle = n === 'Agua' ? `${fmt(a.agua)} m³` : `${fmt(a.luz)} kWh`;
+                                return [`${fmtBs(v)} (${detalle})`, n];
+                            }}
+                        />
+                        <Legend />
+                        <Bar dataKey="costoAgua" name="Agua" stackId="c" fill={COLORES.agua} />
+                        <Bar dataKey="costoLuz" name="Luz" stackId="c" fill={COLORES.luz} radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
+            )}
+        </Tarjeta>
+    );
+}
+
+// ---------- 9. DONA: quién genera el costo del edificio ----------
+export function GraficoDistribucionTipo({ datos }) {
+    const orden = ['Departamento', 'Local', 'Área común'];
+    const porTipo = datos?.areasComunes?.porTipo || [];
+    const data = orden
+        .map(t => ({ name: NOMBRE_TIPO[t], tipo: t, value: porTipo.find(p => p.tipo === t)?.costo || 0 }))
+        .filter(d => d.value > 0);
+    const total = data.reduce((s, d) => s + d.value, 0);
+    const comun = data.find(d => d.tipo === 'Área común')?.value || 0;
+
+    return (
+        <Tarjeta titulo={`¿Quién genera el costo? — ${nombreMes(datos?.mesActual)}`}>
+            {total === 0 ? <SinDatos /> : (
+                <div style={{ position: 'relative' }}>
+                    <ResponsiveContainer width="100%" height={260}>
+                        <PieChart>
+                            <Pie data={data} dataKey="value" nameKey="name" innerRadius={65} outerRadius={95} paddingAngle={2}>
+                                {data.map(d => <Cell key={d.tipo} fill={COLOR_TIPO[d.tipo]} />)}
+                            </Pie>
+                            <Tooltip formatter={(v, n) => [`${fmtBs(v)} (${Math.round(v / total * 100)}%)`, n]} />
+                            <Legend />
+                        </PieChart>
+                    </ResponsiveContainer>
+                    <div className="text-center" style={{ position: 'absolute', top: 'calc(50% - 30px)', left: 0, right: 0, pointerEvents: 'none' }}>
+                        <div className="fs-4 fw-bold" style={{ color: COLOR_TIPO['Área común'] }}>{Math.round(comun / total * 100)}%</div>
+                        <div className="small text-muted">áreas comunes</div>
+                    </div>
                 </div>
             )}
         </Tarjeta>

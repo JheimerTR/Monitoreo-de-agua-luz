@@ -35,7 +35,7 @@ function LayoutPrincipal({ usuario, cerrarSesion }) {
 
   const enlaces = [
     { ruta: '/dashboard', icono: 'bi-speedometer2', texto: 'Panel General' },
-    { ruta: '/departamentos', icono: 'bi-building', texto: 'Departamentos' },
+    { ruta: '/departamentos', icono: 'bi-building', texto: 'Unidades' },
     { ruta: '/reportes', icono: 'bi-bar-chart-line', texto: 'Reportes' },
     ...(esAdmin ? [{ ruta: '/usuarios', icono: 'bi-people', texto: 'Usuarios' }] : [])
   ];

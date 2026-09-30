@@ -87,6 +87,7 @@ const obtenerEstadisticas = async (req, res) => {
             FROM Consumos c
             JOIN Departamentos d ON d.id_departamento = c.id_departamento
             WHERE c.fecha_facturacion >= ? AND c.fecha_facturacion < DATE_ADD(?, INTERVAL 1 MONTH)
+              AND d.tipo <> 'Área común'
             GROUP BY d.id_departamento, d.nombre
             ORDER BY d.nombre
         `, [mes_actual, mes_actual]);
@@ -95,7 +96,9 @@ const obtenerEstadisticas = async (req, res) => {
         const [categorias] = await pdb.query(`
             SELECT c.categoria, c.servicio, COUNT(*) AS cantidad
             FROM Consumos c
-            WHERE c.fecha_facturacion >= DATE_SUB(?, INTERVAL 11 MONTH)
+            JOIN Departamentos d ON d.id_departamento = c.id_departamento
+            WHERE d.tipo <> 'Área común'
+              AND c.fecha_facturacion >= DATE_SUB(?, INTERVAL 11 MONTH)
               AND c.fecha_facturacion <  DATE_ADD(?, INTERVAL 1 MONTH)
             GROUP BY c.categoria, c.servicio
         `, [mes_actual, mes_actual]);
@@ -114,7 +117,67 @@ const obtenerEstadisticas = async (req, res) => {
             ORDER BY d.nombre, c.servicio
         `, [mes_actual, mes_actual, mes_anterior, mes_actual]);
 
+        // 6. Áreas comunes: consumo y costo del mes actual por área
+        const [areas] = await pdb.query(`
+            SELECT
+                d.nombre AS area,
+                d.descripcion,
+                SUM(CASE WHEN c.servicio = 'Agua' THEN c.lectura ELSE 0 END)                       AS agua,
+                SUM(CASE WHEN c.servicio = 'Luz'  THEN c.lectura ELSE 0 END)                       AS luz,
+                SUM(CASE WHEN c.servicio = 'Agua' THEN c.lectura * u.tarifa_por_unidad ELSE 0 END) AS costo_agua,
+                SUM(CASE WHEN c.servicio = 'Luz'  THEN c.lectura * u.tarifa_por_unidad ELSE 0 END) AS costo_luz
+            FROM Consumos c
+            JOIN Departamentos d ON d.id_departamento = c.id_departamento
+            JOIN Configuracion_Umbrales u ON u.servicio = c.servicio
+            WHERE d.tipo = 'Área común'
+              AND c.fecha_facturacion >= ? AND c.fecha_facturacion < DATE_ADD(?, INTERVAL 1 MONTH)
+            GROUP BY d.id_departamento, d.nombre, d.descripcion
+            ORDER BY SUM(c.lectura * u.tarifa_por_unidad) DESC
+        `, [mes_actual, mes_actual]);
+
+        // 7. Costo del mes por tipo de unidad (Departamento / Local / Área común)
+        const [porTipo] = await pdb.query(`
+            SELECT d.tipo, SUM(c.lectura * u.tarifa_por_unidad) AS costo
+            FROM Consumos c
+            JOIN Departamentos d ON d.id_departamento = c.id_departamento
+            JOIN Configuracion_Umbrales u ON u.servicio = c.servicio
+            WHERE c.fecha_facturacion >= ? AND c.fecha_facturacion < DATE_ADD(?, INTERVAL 1 MONTH)
+            GROUP BY d.tipo
+        `, [mes_actual, mes_actual]);
+
+        // 8. Unidades privadas activas entre las que se reparte el costo de las áreas comunes
+        const [[{ unidades }]] = await pdb.query(
+            "SELECT COUNT(*) AS unidades FROM Departamentos WHERE estado = 'Activo' AND tipo <> 'Área común'"
+        );
+
+        // 9. Costo mensual de las áreas comunes (últimos 12 meses)
+        const [mensualAreas] = await pdb.query(`
+            SELECT DATE_FORMAT(c.fecha_facturacion, '%Y-%m') AS mes,
+                   SUM(c.lectura * u.tarifa_por_unidad) AS costo
+            FROM Consumos c
+            JOIN Departamentos d ON d.id_departamento = c.id_departamento
+            JOIN Configuracion_Umbrales u ON u.servicio = c.servicio
+            WHERE d.tipo = 'Área común'
+              AND c.fecha_facturacion >= DATE_SUB(?, INTERVAL 11 MONTH)
+              AND c.fecha_facturacion <  DATE_ADD(?, INTERVAL 1 MONTH)
+            GROUP BY mes
+            ORDER BY mes
+        `, [mes_actual, mes_actual]);
+
         const num = (v) => Number(v) || 0;
+
+        const areasComunes = areas.map(a => ({
+            area: a.area,
+            descripcion: a.descripcion,
+            agua: num(a.agua),
+            luz: num(a.luz),
+            costoAgua: num(a.costo_agua),
+            costoLuz: num(a.costo_luz),
+            costo: num(a.costo_agua) + num(a.costo_luz)
+        }));
+        const costoAreas = areasComunes.reduce((s, a) => s + a.costo, 0);
+        const costoEdificio = porTipo.reduce((s, t) => s + num(t.costo), 0);
+        const nUnidades = num(unidades);
 
         res.json({
             mesActual: mes_actual.slice(0, 7),
@@ -157,7 +220,16 @@ const obtenerEstadisticas = async (req, res) => {
                     anterior,
                     variacion: anterior > 0 ? ((actual - anterior) / anterior) * 100 : null
                 };
-            })
+            }),
+            areasComunes: {
+                areas: areasComunes,
+                costoTotal: costoAreas,
+                porcentajeDelEdificio: costoEdificio > 0 ? (costoAreas / costoEdificio) * 100 : 0,
+                unidades: nUnidades,
+                prorrateoPorUnidad: nUnidades > 0 ? costoAreas / nUnidades : 0,
+                porTipo: porTipo.map(t => ({ tipo: t.tipo, costo: num(t.costo) })),
+                mensual: mensualAreas.map(m => ({ mes: m.mes, costo: num(m.costo) }))
+            }
         });
     } catch (err) {
         console.error(err);

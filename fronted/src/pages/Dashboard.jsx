@@ -187,12 +187,20 @@ export default function Dashboard() {
                 <div className="card-body">
                     <form onSubmit={registrarLectura} className="row g-3 align-items-end">
                         <div className="col-md-3">
-                            <label className="form-label text-muted small fw-bold">Departamento</label>
+                            <label className="form-label text-muted small fw-bold">Unidad</label>
                             <select className="form-select" value={idDepartamento} onChange={e => setIdDepartamento(e.target.value)} required>
                                 <option value="">-- Seleccionar --</option>
-                                {departamentos.filter(d => d.estado !== 'Inactivo').map(dep => (
-                                    <option key={dep.id_departamento} value={dep.id_departamento}>{dep.nombre}</option>
-                                ))}
+                                {/* Agrupadas por tipo: departamentos, locales y áreas comunes */}
+                                {[['Departamento', 'Departamentos'], ['Local', 'Locales comerciales'], ['Área común', 'Áreas comunes']].map(([tipo, titulo]) => {
+                                    const unidades = departamentos.filter(d => d.estado !== 'Inactivo' && (d.tipo || 'Departamento') === tipo);
+                                    return unidades.length > 0 && (
+                                        <optgroup key={tipo} label={titulo}>
+                                            {unidades.map(dep => (
+                                                <option key={dep.id_departamento} value={dep.id_departamento}>{dep.nombre}</option>
+                                            ))}
+                                        </optgroup>
+                                    );
+                                })}
                             </select>
                         </div>
                         <div className="col-md-2">

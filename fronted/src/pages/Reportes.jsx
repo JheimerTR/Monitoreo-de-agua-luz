@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
-import { GraficoPorDepartamento, GraficoCategorias, GraficoCosto, ComparativoMensual } from '../components/Graficos';
+import { GraficoPorDepartamento, GraficoCategorias, GraficoCosto, ComparativoMensual, ResumenAreasComunes, GraficoAreasComunes, GraficoDistribucionTipo } from '../components/Graficos';
 import { useEstadisticas } from '../components/estadisticas';
 
 export default function Reportes() {
@@ -67,6 +67,20 @@ export default function Reportes() {
                 </div>
                 <div className="col-12">
                     <ComparativoMensual datos={estadisticas} />
+                </div>
+            </div>
+
+            {/* ÁREAS COMUNES */}
+            <h4 className="fw-bold mt-5 mb-3" style={{ color: '#1f2937' }}>
+                <i className="bi bi-tree me-2 text-success"></i>Áreas comunes
+            </h4>
+            <ResumenAreasComunes datos={estadisticas} />
+            <div className="row g-4 mb-5">
+                <div className="col-lg-8">
+                    <GraficoAreasComunes datos={estadisticas} />
+                </div>
+                <div className="col-lg-4">
+                    <GraficoDistribucionTipo datos={estadisticas} />
                 </div>
             </div>
             

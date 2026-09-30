@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 -- 1. Crear la base de datos
 CREATE DATABASE IF NOT EXISTS monitoreo_bd;
 USE monitoreo_bd;
@@ -6,6 +8,7 @@ USE monitoreo_bd;
 CREATE TABLE Departamentos (
     id_departamento INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL UNIQUE,
+    tipo VARCHAR(20) NOT NULL DEFAULT 'Departamento',   -- Departamento | Local | Área común
     descripcion VARCHAR(255),
     estado VARCHAR(15) DEFAULT 'Activo',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -69,10 +72,15 @@ VALUES
 INSERT INTO Usuarios (username, password_hash, rol, estado) 
 VALUES ('admin', '$2b$10$fKg7NwlIC0TjbStbTgNN6.B2mRZDl2DRuXoR3UcJkozHD3.uiDTmK', 'admin', 'Activo');
 -- Departamentos para la demostración
-INSERT INTO Departamentos (nombre, descripcion) VALUES 
-('Apto 101', 'Familia Perez'), 
-('Apto 102', 'Familia Gomez'), 
-('Local Comercial 1', 'Tienda Principal');
+INSERT INTO Departamentos (nombre, tipo, descripcion) VALUES 
+('Apto 101', 'Departamento', 'Familia Perez'), 
+('Apto 102', 'Departamento', 'Familia Gomez'), 
+('Local Comercial 1', 'Local', 'Tienda Principal'),
+('Piscina', 'Área común', 'Bomba de filtrado y reposición de agua'),
+('Bombas de agua', 'Área común', 'Bombeo al tanque elevado'),
+('Ascensor', 'Área común', 'Ascensor principal'),
+('Pasillos y escaleras', 'Área común', 'Iluminación y limpieza'),
+('Jardín y riego', 'Área común', 'Riego e iluminación exterior');
 
 -- Consumos iniciales para que el Dashboard tenga datos al arrancar
 INSERT INTO Consumos (id_departamento, servicio, lectura, fecha_facturacion) VALUES 

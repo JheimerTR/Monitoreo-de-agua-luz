@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
+import { GraficoPorDepartamento, GraficoCategorias, GraficoCosto, ComparativoMensual } from '../components/Graficos';
+import { useEstadisticas } from '../components/estadisticas';
 
 export default function Reportes() {
     const [resumen, setResumen] = useState([]);
     const [mayorConsumo, setMayorConsumo] = useState(null);
     const [menorConsumo, setMenorConsumo] = useState(null);
+    const { datos: estadisticas, error: errorEstadisticas } = useEstadisticas();
 
     useEffect(() => {
         cargarReportes();
@@ -27,8 +30,8 @@ export default function Reportes() {
                             consumoTotal: 0
                         };
                     }
-                    // Sumamos la variación absoluta al total
-                    agrupado[clave].consumoTotal += parseFloat(item.diferencia_absoluta || 0);
+                    // Sumamos el consumo del mes (lectura) al total
+                    agrupado[clave].consumoTotal += parseFloat(item.lectura || 0);
                 });
 
                 const arrayResumen = Object.values(agrupado);
@@ -48,6 +51,24 @@ export default function Reportes() {
     return (
         <div>
             <h2 className="mb-4 fw-bold" style={{ color: '#1f2937' }}>Reportes y Estadísticas</h2>
+
+            {errorEstadisticas && <div className="alert alert-danger">{errorEstadisticas}</div>}
+
+            {/* GRÁFICOS */}
+            <div className="row g-4 mb-4">
+                <div className="col-lg-8">
+                    <GraficoPorDepartamento datos={estadisticas} />
+                </div>
+                <div className="col-lg-4">
+                    <GraficoCategorias datos={estadisticas} />
+                </div>
+                <div className="col-12">
+                    <GraficoCosto datos={estadisticas} />
+                </div>
+                <div className="col-12">
+                    <ComparativoMensual datos={estadisticas} />
+                </div>
+            </div>
             
             <div className="card sombra-suave border-0 mb-4 p-3">
                 <div className="card-body">
@@ -80,7 +101,7 @@ export default function Reportes() {
                                                     </span>
                                                 </td>
                                                 <td className="fw-bold">
-                                                    {item.consumoTotal.toFixed(2)}
+                                                    {item.consumoTotal.toFixed(2)} {item.servicio === 'Agua' ? 'm³' : 'kWh'}
                                                 </td>
                                             </tr>
                                         );

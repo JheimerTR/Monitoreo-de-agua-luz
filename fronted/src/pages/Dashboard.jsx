@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import Swal from 'sweetalert2';
+import { TarjetasKPI, GraficoMensual } from '../components/Graficos';
+import { useEstadisticas } from '../components/estadisticas';
 
 export default function Dashboard() {
     // Datos principales
@@ -24,6 +26,9 @@ export default function Dashboard() {
     const [mensajeError, setMensajeError] = useState('');
     const [alerta, setAlerta] = useState(null);
 
+
+    // Estadísticas para KPIs y gráfico mensual
+    const { datos: estadisticas, recargar: recargarEstadisticas } = useEstadisticas();
 
     useEffect(() => {
         cargarDatos();
@@ -57,6 +62,7 @@ export default function Dashboard() {
             setLectura('');
             setFecha('');
             cargarDatos(); 
+            recargarEstadisticas();
             setPaginaActual(1); 
         })
         .catch(err => {
@@ -111,6 +117,7 @@ export default function Dashboard() {
                     .then(res => {
                         Swal.fire('¡Actualizado!', res.data.mensaje, 'success');
                         cargarDatos(); 
+                        recargarEstadisticas();
                     })
                     .catch(err => Swal.fire('Error', err.response?.data?.error || 'No se pudo modificar', 'error'));
             }
@@ -158,7 +165,15 @@ export default function Dashboard() {
 
     return (
         <div>
-            <h2 className="mb-4 fw-bold" style={{ color: '#1f2937' }}>Registro de Consumo</h2>
+            <h2 className="mb-3 fw-bold" style={{ color: '#1f2937' }}>Panel General</h2>
+
+            {/* KPIs y tendencia mensual */}
+            <TarjetasKPI datos={estadisticas} />
+            <div className="mb-5">
+                <GraficoMensual datos={estadisticas} />
+            </div>
+
+            <h4 className="mb-3 fw-bold" style={{ color: '#1f2937' }}>Registro de Consumo</h4>
             
             {/* Alerta de Incremento Atípico */}
             {alerta && (

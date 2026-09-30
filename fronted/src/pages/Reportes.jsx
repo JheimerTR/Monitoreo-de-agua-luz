@@ -28,7 +28,7 @@ export default function Reportes() {
                         };
                     }
                     // Sumamos la variación absoluta al total
-                    agrupado[clave].consumoTotal += parseFloat(item.diferencia_absoluta || 0);
+                    agrupado[clave].consumoTotal += parseFloat(item.lectura || 0);
                 });
 
                 const arrayResumen = Object.values(agrupado);

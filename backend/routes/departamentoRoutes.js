@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-// 1. IMPORTAR LAS FUNCIONES DEL CONTROLADOR (¡Esto era lo que faltaba!)
-// Nota: Si tus funciones en el controlador se llaman diferente (ej. "registrar" en vez de "crearDepartamento"), cámbialo aquí.
-const { obtenerDepartamentos, crearDepartamento, cambiarEstado } = require('../controllers/departamentoController');
+// 1. Importamos las funciones con los NOMBRES EXACTOS de tu controlador
+const { obtenerDepartamentos, registrarDepartamento, cambiarEstado } = require('../controllers/departamentoController');
 
-// 2. IMPORTAR AL GUARDIA DE SEGURIDAD
+// 2. Importamos al guardia de seguridad
 const { verificarToken } = require('../middlewares/authMiddleware'); 
 
-// 3. RUTAS PROTEGIDAS POR EL GUARDIA
+// 3. Rutas protegidas
 router.get('/', verificarToken, obtenerDepartamentos);
-router.post('/', verificarToken, crearDepartamento);
+router.post('/', verificarToken, registrarDepartamento); // <-- ¡Aquí estaba el error de nombre!
 router.put('/:id/estado', verificarToken, cambiarEstado); 
 
 module.exports = router;

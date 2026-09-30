@@ -11,7 +11,7 @@ export default function Departamentos() {
     // Estados para Búsqueda y Paginación
     const [busqueda, setBusqueda] = useState('');
     const [paginaActual, setPaginaActual] = useState(1);
-    const itemsPorPagina = 5; // Puedes cambiar a 10 o 20 según necesites
+    const itemsPorPagina = 5;
 
     useEffect(() => {
         cargarDepartamentos();
@@ -36,11 +36,10 @@ export default function Departamentos() {
             .catch(err => setMensaje(err.response?.data?.error || 'Error al guardar'));
     };
 
-   const toggleEstado = (id, estadoActual) => {
+    const toggleEstado = (id, estadoActual) => {
         const accion = estadoActual === 'Activo' ? 'inactivar' : 'reactivar';
-        const colorBoton = estadoActual === 'Activo' ? '#dc3545' : '#198754'; // Rojo para inactivar, Verde para reactivar
+        const colorBoton = estadoActual === 'Activo' ? '#dc3545' : '#198754';
 
-        // Reemplazamos window.confirm por SweetAlert2
         Swal.fire({
             title: '¿Estás seguro?',
             text: `El departamento pasará a estado ${estadoActual === 'Activo' ? 'Inactivo' : 'Activo'}.`,
@@ -50,19 +49,13 @@ export default function Departamentos() {
             cancelButtonColor: '#6c757d',
             confirmButtonText: `Sí, ${accion}`,
             cancelButtonText: 'Cancelar',
-            reverseButtons: true // Pone el botón de cancelar a la izquierda
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                // Si el usuario confirma, hacemos la petición al backend
                 axios.put(`https://monitoreo-de-agua-luz.onrender.com/api/departamentos/${id}/estado`)
                     .then(res => {
-                        // Mostramos un mensaje de éxito bonito
-                        Swal.fire(
-                            '¡Actualizado!',
-                            res.data.mensaje,
-                            'success'
-                        );
-                        setMensaje(''); // Limpiamos el mensaje de texto antiguo
+                        Swal.fire('¡Actualizado!', res.data.mensaje, 'success');
+                        setMensaje('');
                         cargarDepartamentos();
                     })
                     .catch(err => Swal.fire('Error', 'No se pudo cambiar el estado', 'error'));
@@ -70,24 +63,24 @@ export default function Departamentos() {
         });
     };
 
-    // 1. Lógica de Búsqueda
+    // Lógica de Búsqueda
     const departamentosFiltrados = departamentos.filter(dep => 
         dep.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
         (dep.descripcion && dep.descripcion.toLowerCase().includes(busqueda.toLowerCase()))
     );
 
-    // 2. Lógica de Paginación
+    // Lógica de Paginación
     const indexUltimoItem = paginaActual * itemsPorPagina;
     const indexPrimerItem = indexUltimoItem - itemsPorPagina;
     const departamentosPaginados = departamentosFiltrados.slice(indexPrimerItem, indexUltimoItem);
     const totalPaginas = Math.ceil(departamentosFiltrados.length / itemsPorPagina);
 
-    // Función para manejar el cambio en el buscador y regresar a la página 1
     const manejarBusqueda = (e) => {
         setBusqueda(e.target.value);
         setPaginaActual(1); 
     };
-return (
+
+    return (
         <div>
             <h2 className="mb-4 fw-bold" style={{ color: '#1f2937' }}>Gestión de Departamentos</h2>
             
@@ -95,19 +88,35 @@ return (
             <div className="card sombra-suave border-0 mb-4 p-2">
                 <div className="card-body">
                     <form onSubmit={registrar} className="row g-3 align-items-end">
-                        <div className="col-md-5">
+                        <div className="col-md-4">
                             <label className="form-label text-muted small fw-bold">Nombre del Departamento</label>
-                            <input type="text" className="form-control" placeholder="Ej. Depto 101" value={nombre} onChange={e => setNombre(e.target.value)} required />
+                            {/* AQUÍ VA LA VALIDACIÓN CORRECTA */}
+                            <input 
+                                type="text" 
+                                className="form-control" 
+                                placeholder="Ej. Depto 101" 
+                                value={nombre} 
+                                onChange={e => setNombre(e.target.value)} 
+                                pattern="[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]+" 
+                                title="Solo letras y números permitidos"
+                                required 
+                            />
                         </div>
                         <div className="col-md-5">
                             <label className="form-label text-muted small fw-bold">Descripción (Opcional)</label>
-                            <input type="text" className="form-control" placeholder="Ej. Piso 1, Torre A" value={descripcion} onChange={e => setDescripcion(e.target.value)} />
+                            <input 
+                                type="text" 
+                                className="form-control" 
+                                placeholder="Ej. Piso 1, Torre A" 
+                                value={descripcion} 
+                                onChange={e => setDescripcion(e.target.value)} 
+                            />
                         </div>
-                        <div className="col-md-2">
-                        <button type="submit" className="btn btn-dark w-100 fw-bold" style={{ whiteSpace: 'nowrap' }}>
-                            Registrar
-                        </button>
-                    </div>
+                        <div className="col-md-3">
+                            <button type="submit" className="btn btn-dark w-100 fw-bold" style={{ whiteSpace: 'nowrap' }}>
+                                Registrar
+                            </button>
+                        </div>
                     </form>
                     {mensaje && <div className="mt-3 text-primary fw-bold">{mensaje}</div>}
                 </div>
@@ -116,15 +125,13 @@ return (
             {/* Título de lista y Buscador */}
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h4 className="fw-bold m-0" style={{ color: '#1f2937' }}>Departamentos Registrados</h4>
+                {/* BUSCADOR RESTAURADO A SU ESTADO ORIGINAL */}
                 <input 
                     type="text" 
-                    className="form-control" 
-                    placeholder="Ej. Depto 101" 
-                    value={nombre} 
-                    onChange={e => setNombre(e.target.value)} 
-                    pattern="[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]+" 
-                    title="Solo letras y números permitidos"
-                    required 
+                    className="form-control w-25" 
+                    placeholder="🔍 Buscar..." 
+                    value={busqueda} 
+                    onChange={manejarBusqueda}
                 />
             </div>
 
@@ -160,12 +167,11 @@ return (
                                                 {dep.estado === 'Activo' ? 'Inactivar' : 'Reactivar'}
                                             </button>
                                         </td>
-
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="4" className="text-center py-4 text-muted">No se encontraron departamentos</td>
+                                    <td colSpan="5" className="text-center py-4 text-muted">No se encontraron departamentos</td>
                                 </tr>
                             )}
                         </tbody>
@@ -187,5 +193,4 @@ return (
             )}
         </div>
     );
-    
 }

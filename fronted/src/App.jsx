@@ -2,21 +2,33 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-import Inicio from './pages/Inicio'; // <-- NUEVO
+import Inicio from './pages/Inicio';
 import Departamentos from './pages/Departamentos';
 import Dashboard from './pages/Dashboard';
 import Reportes from './pages/Reportes';
 import Login from './pages/Login'; 
 import Usuarios from './pages/Usuarios';
 import FormularioRegistro from "./pages/FormularioRegistro";
-import axios from 'axios';
 
+// --- INTERCEPTOR DE SEGURIDAD JWT ---
+// Esto intercepta TODAS las llamadas y les pega el token automáticamente
+axios.interceptors.request.use(
+    config => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
+    },
+    error => {
+        return Promise.reject(error);
+    }
+);
+// ------------------------------------
 
-// Sub-componente para gestionar el layout y la ruta activa
 function LayoutPrincipal({ usuario, cerrarSesion, mensajeBackend }) {
-  const location = useLocation(); // Detecta en qué URL estamos
+  const location = useLocation();
 
-  // Función que asigna el borde amarillo si la ruta coincide
   const claseActiva = (ruta) => {
     return location.pathname === ruta 
       ? "nav-link text-white px-3 py-2 align-middle w-100 active-menu mb-1 rounded-end" 
@@ -94,7 +106,9 @@ export default function App() {
   useEffect(() => {
     const usuarioGuardado = localStorage.getItem('usuarioActivo');
     if (usuarioGuardado) { setEstaAutenticado(true); setUsuario(usuarioGuardado); }
-    axios.get('http://localhost:3001/api/test')
+    
+    // API CORREGIDA: Apuntando a tu backend de Render
+    axios.get('https://monitoreo-de-agua-luz.onrender.com/api/test')
       .then(res => setMensajeBackend(res.data.mensaje))
       .catch(err => setMensajeBackend('Error de conexión'));
   }, []);
@@ -106,6 +120,7 @@ export default function App() {
 
   const cerrarSesion = () => {
     localStorage.removeItem('usuarioActivo');
+    localStorage.removeItem('token'); // <-- También borramos el token al salir
     setEstaAutenticado(false);
     setUsuario('');
   };

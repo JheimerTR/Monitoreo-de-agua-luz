@@ -97,17 +97,21 @@ export function GraficoMensual({ datos }) {
 
 // ---------- 3. BARRAS POR DEPARTAMENTO ----------
 export function GraficoPorDepartamento({ datos }) {
-    const data = datos?.porDepartamento || [];
+    // Etiquetas cortas para que entren 20 departamentos: "Apto 101" -> "101", "Local Comercial 1" -> "Local 1"
+    const data = (datos?.porDepartamento || []).map(d => ({
+        ...d,
+        corto: d.departamento.replace(/^Apto\s*/i, '').replace(/^Local Comercial/i, 'Local')
+    }));
     return (
         <Tarjeta titulo={`Consumo por departamento — ${nombreMes(datos?.mesActual)}`}>
             {data.length === 0 ? <SinDatos /> : (
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <ResponsiveContainer width="100%" height={320}>
+                    <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 10 }} barCategoryGap="15%">
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="departamento" tick={{ fontSize: 12 }} />
+                        <XAxis dataKey="corto" tick={{ fontSize: 11 }} interval={0} angle={-45} textAnchor="end" height={50} />
                         <YAxis yAxisId="agua" tick={{ fontSize: 12 }} />
                         <YAxis yAxisId="luz" orientation="right" tick={{ fontSize: 12 }} />
-                        <Tooltip formatter={(v, n) => [fmt(v) + (n === 'Agua (m³)' ? ' m³' : ' kWh'), n]} />
+                        <Tooltip labelFormatter={(_, p) => p?.[0]?.payload?.departamento} formatter={(v, n) => [fmt(v) + (n === 'Agua (m³)' ? ' m³' : ' kWh'), n]} />
                         <Legend />
                         <Bar yAxisId="agua" dataKey="agua" name="Agua (m³)" fill={COLORES.agua} radius={[4, 4, 0, 0]} />
                         <Bar yAxisId="luz" dataKey="luz" name="Luz (kWh)" fill={COLORES.luz} radius={[4, 4, 0, 0]} />
@@ -189,10 +193,13 @@ const CONSEJOS = {
 };
 
 export function ComparativoMensual({ datos }) {
-    const filas = datos?.comparativo || [];
+    const [verTodos, setVerTodos] = useState(false);
+    // Primero los mayores incrementos: son los que necesitan atención
+    const todas = [...(datos?.comparativo || [])].sort((a, b) => (b.variacion ?? -Infinity) - (a.variacion ?? -Infinity));
+    const filas = verTodos ? todas : todas.slice(0, 8);
     return (
         <Tarjeta titulo={`Ahorro por departamento: ${nombreMes(datos?.mesActual)} vs ${nombreMes(datos?.mesAnterior)}`}>
-            {filas.length === 0 ? <SinDatos /> : (
+            {todas.length === 0 ? <SinDatos /> : (
                 <div className="table-responsive">
                     <table className="table align-middle mb-0">
                         <thead className="table-light text-muted small">
@@ -239,6 +246,13 @@ export function ComparativoMensual({ datos }) {
                             })}
                         </tbody>
                     </table>
+                    {todas.length > 8 && (
+                        <div className="text-center mt-3">
+                            <button className="btn btn-sm btn-outline-secondary" onClick={() => setVerTodos(!verTodos)}>
+                                {verTodos ? 'Ver solo los 8 mayores incrementos' : `Ver todos (${todas.length})`}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </Tarjeta>

@@ -32,3 +32,79 @@ body {
   transform: translateY(-4px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
 }
+
+/* =====================================================
+   LAYOUT RESPONSIVE
+   Escritorio: menú fijo, solo el contenido hace scroll.
+   Celular (< 768px): barra superior + menú deslizable.
+   ===================================================== */
+.app-shell {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.app-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background-color: #111827;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.app-main {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+.app-contenido {
+  padding: 1.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+.app-topbar,
+.app-backdrop,
+.app-cerrar-menu {
+  display: none;
+}
+
+/* Buscadores: ancho completo en celular, fijo en escritorio */
+.buscador { width: 100%; }
+@media (min-width: 768px) {
+  .buscador { width: 280px; }
+}
+
+@media (max-width: 767.98px) {
+  .app-shell { flex-direction: column; }
+  .app-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    padding: 0 1rem;
+    background-color: #111827;
+    flex-shrink: 0;
+  }
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    z-index: 1050;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .app-sidebar.abierto { transform: translateX(0); }
+  .app-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+  }
+  .app-cerrar-menu { display: inline-block; }
+  .app-contenido { padding: 1rem; }
+  .app-contenido h2 { font-size: 1.5rem; }
+}

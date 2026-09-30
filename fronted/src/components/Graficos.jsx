@@ -201,14 +201,14 @@ export function ComparativoMensual({ datos }) {
         <Tarjeta titulo={`Ahorro por departamento: ${nombreMes(datos?.mesActual)} vs ${nombreMes(datos?.mesAnterior)}`}>
             {todas.length === 0 ? <SinDatos /> : (
                 <div className="table-responsive">
-                    <table className="table align-middle mb-0">
+                    <table className="table align-middle mb-0" style={{ minWidth: 980 }}>
                         <thead className="table-light text-muted small">
                             <tr>
                                 <th>Departamento</th>
                                 <th>Servicio</th>
                                 <th className="text-end">Anterior</th>
                                 <th className="text-end">Actual</th>
-                                <th style={{ width: '30%' }}>Variación</th>
+                                <th style={{ width: '25%' }}>Variación</th>
                                 <th>Recomendación</th>
                             </tr>
                         </thead>
@@ -238,7 +238,7 @@ export function ComparativoMensual({ datos }) {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="small">
+                                        <td className="small" style={{ minWidth: 280 }}>
                                             {ahorra ? <span className="text-success">✅ ¡Buen ahorro!</span> : <span className="text-muted">💡 {CONSEJOS[f.servicio]}</span>}
                                         </td>
                                     </tr>

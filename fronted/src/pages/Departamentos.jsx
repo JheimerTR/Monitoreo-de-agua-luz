@@ -112,9 +112,9 @@ return (
             </div>
 
             {/* Título de lista y Buscador */}
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
                 <h4 className="fw-bold m-0" style={{ color: '#1f2937' }}>Departamentos Registrados</h4>
-                <div className="input-group w-25">
+                <div className="input-group buscador">
                     <span className="input-group-text bg-white"><i className="bi bi-search"></i></span>
                     <input 
                         type="text" 

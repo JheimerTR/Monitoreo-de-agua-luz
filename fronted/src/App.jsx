@@ -40,7 +40,7 @@ function LayoutPrincipal({ usuario, cerrarSesion, mensajeBackend }) {
       <div className="row flex-nowrap">
         
         {/* MENÚ LATERAL OSCURO */}
-        <div className="col-auto col-md-3 col-xl-2 px-0" style={{ backgroundColor: '#111827', minHeight: '100vh' }}>
+        <div className="col-auto col-md-3 col-xl-2 px-0 sticky-top" style={{ backgroundColor: '#111827', height: '100vh', overflowY: 'auto' }}>
           <div className="d-flex flex-column align-items-center align-items-sm-start pt-4 text-white min-vh-100">
             <Link to="/" className="d-flex align-items-center pb-4 px-4 me-md-auto text-white text-decoration-none w-100 border-bottom border-secondary">
               <span className="fs-5 d-none d-sm-inline fw-bold text-warning">💧⚡ Monitoreo</span>

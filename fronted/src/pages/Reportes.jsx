@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function Reportes() {
     const [resumen, setResumen] = useState([]);
@@ -11,12 +12,10 @@ export default function Reportes() {
     }, []);
 
     const cargarReportes = () => {
-        // Usamos la ruta de historial que ya existe para calcular los totales
         axios.get('https://monitoreo-de-agua-luz.onrender.com/api/consumos')
             .then(res => {
                 const consumos = res.data;
                 
-                // Agrupar y sumar los consumos por departamento y servicio (CU24)
                 const agrupado = {};
                 consumos.forEach(item => {
                     const clave = `${item.departamento}-${item.servicio}`;
@@ -27,14 +26,13 @@ export default function Reportes() {
                             consumoTotal: 0
                         };
                     }
-                    // Sumamos la variación absoluta al total
+                    // AHORA SÍ: Sumamos directamente las lecturas
                     agrupado[clave].consumoTotal += parseFloat(item.lectura || 0);
                 });
 
                 const arrayResumen = Object.values(agrupado);
                 setResumen(arrayResumen);
 
-                // Calcular automáticamente el mayor y menor (CU25)
                 if (arrayResumen.length > 0) {
                     const max = Math.max(...arrayResumen.map(i => i.consumoTotal));
                     const min = Math.min(...arrayResumen.map(i => i.consumoTotal));
@@ -45,13 +43,41 @@ export default function Reportes() {
             .catch(err => console.error("Error al cargar reportes:", err));
     };
 
+    // Preparamos los datos para que el gráfico los entienda fácil
+    const datosGrafico = resumen.map(item => ({
+        nombre: `${item.departamento} (${item.servicio})`,
+        Consumo: parseFloat(item.consumoTotal.toFixed(2)),
+        fill: item.servicio === 'Agua' ? '#0dcaf0' : '#ffc107' // Celeste para agua, amarillo para luz
+    }));
+
     return (
         <div>
             <h2 className="mb-4 fw-bold" style={{ color: '#1f2937' }}>Reportes y Estadísticas</h2>
             
+            {/* NUEVA SECCIÓN: Gráfico de Barras */}
+            {resumen.length > 0 && (
+                <div className="card sombra-suave border-0 mb-4 p-3">
+                    <div className="card-body">
+                        <h5 className="fw-bold mb-4 text-secondary">Gráfico de Consumo Acumulado</h5>
+                        <div style={{ width: '100%', height: 350 }}>
+                            <ResponsiveContainer>
+                                <BarChart data={datosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" opacity={0.5} />
+                                    <XAxis dataKey="nombre" />
+                                    <YAxis />
+                                    <Tooltip cursor={{fill: '#f8f9fa'}} />
+                                    <Legend />
+                                    <Bar dataKey="Consumo" name="Total Acumulado" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="card sombra-suave border-0 mb-4 p-3">
                 <div className="card-body">
-                    <h5 className="fw-bold mb-4 text-secondary">Resumen Global del Edificio</h5>
+                    <h5 className="fw-bold mb-4 text-secondary">Tabla de Detalles Globales</h5>
                     
                     <div className="table-responsive">
                         <table className="table table-hover align-middle mb-0">
@@ -63,10 +89,8 @@ export default function Reportes() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {/* Usamos (resumen || []) por seguridad para evitar pantallas en blanco */}
                                 {(resumen || []).length > 0 ? (
                                     resumen.map((item, index) => {
-                                        // Lógica para resaltar el mayor y menor consumo
                                         let colorClase = "";
                                         if (item.consumoTotal === mayorConsumo && mayorConsumo > 0) colorClase = "table-danger";
                                         else if (item.consumoTotal === menorConsumo && menorConsumo >= 0 && resumen.length > 1) colorClase = "table-success";
@@ -94,7 +118,6 @@ export default function Reportes() {
                         </table>
                     </div>
 
-                    {/* Leyenda de colores estilo Badges */}
                     <div className="d-flex mt-4 gap-3">
                         <span className="badge bg-danger py-2 px-3">Mayor Consumo Histórico</span>
                         <span className="badge bg-success py-2 px-3">Menor Consumo Histórico</span>

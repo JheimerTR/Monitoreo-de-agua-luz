@@ -104,8 +104,10 @@ return (
                             <input type="text" className="form-control" placeholder="Ej. Piso 1, Torre A" value={descripcion} onChange={e => setDescripcion(e.target.value)} />
                         </div>
                         <div className="col-md-2">
-                            <button type="submit" className="btn btn-dark w-100 fw-bold">Registrar</button>
-                        </div>
+                        <button type="submit" className="btn btn-dark w-100 fw-bold" style={{ whiteSpace: 'nowrap' }}>
+                            Registrar
+                        </button>
+                    </div>
                     </form>
                     {mensaje && <div className="mt-3 text-primary fw-bold">{mensaje}</div>}
                 </div>
@@ -116,10 +118,13 @@ return (
                 <h4 className="fw-bold m-0" style={{ color: '#1f2937' }}>Departamentos Registrados</h4>
                 <input 
                     type="text" 
-                    className="form-control w-25" 
-                    placeholder="🔍 Buscar..." 
-                    value={busqueda} 
-                    onChange={manejarBusqueda}
+                    className="form-control" 
+                    placeholder="Ej. Depto 101" 
+                    value={nombre} 
+                    onChange={e => setNombre(e.target.value)} 
+                    pattern="[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]+" 
+                    title="Solo letras y números permitidos"
+                    required 
                 />
             </div>
 

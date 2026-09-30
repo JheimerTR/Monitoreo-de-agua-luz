@@ -14,6 +14,7 @@ export default function Login({ onLogin }) {
             .then(res => {
                 // Almacenamos la sesión en el navegador (RF12)
                 localStorage.setItem('usuarioActivo', res.data.username);
+                localStorage.setItem('token', res.data.token);
                 onLogin(true); // Cambiamos el estado en App.jsx para darle acceso
             })
             .catch(err => {

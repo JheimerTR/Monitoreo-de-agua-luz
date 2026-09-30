@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { obtenerDepartamentos, registrarDepartamento, cambiarEstado } = require('../controllers/departamentoController');
+const { verificarToken } = require('../middlewares/authMiddleware'); 
 
-// Rutas base: /api/departamentos
-router.get('/', obtenerDepartamentos);
-router.post('/', registrarDepartamento);
-router.put('/:id/estado', cambiarEstado);
-
+// Agregas "verificarToken" en el medio de la ruta
+router.get('/', verificarToken, obtenerDepartamentos);
+router.post('/', verificarToken, crearDepartamento);
 module.exports = router;

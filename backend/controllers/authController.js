@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken'); // <-- Importamos JWT
 
 const login = (req, res) => {
     const { username, password } = req.body;
@@ -32,8 +33,23 @@ const login = (req, res) => {
             }
         }
 
+        // Si la contraseña es correcta, reseteamos los intentos
         db.query("UPDATE Usuarios SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id_usuario = ?", [usuario.id_usuario]);
-        res.json({ mensaje: 'Inicio de sesión exitoso', username: usuario.username });
+        
+        // Creamos el Token de seguridad (Pulsera VIP)
+        const token = jwt.sign(
+            { id: usuario.id_usuario, username: usuario.username, rol: usuario.rol },
+            process.env.JWT_SECRET,
+            { expiresIn: '8h' } // Caduca en 8 horas
+        );
+
+        // Devolvemos los datos y el token al frontend
+        res.json({ 
+            mensaje: 'Inicio de sesión exitoso', 
+            username: usuario.username,
+            rol: usuario.rol,
+            token: token // <-- Aquí enviamos el token
+        });
     });
 };
 

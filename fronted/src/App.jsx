@@ -11,18 +11,6 @@ import Usuarios from './pages/Usuarios';
 import FormularioRegistro from "./pages/FormularioRegistro";
 import axios from 'axios';
 
-axios.interceptors.request.use(
-    config => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
-        }
-        return config;
-    },
-    error => {
-        return Promise.reject(error);
-    }
-);
 
 // Sub-componente para gestionar el layout y la ruta activa
 function LayoutPrincipal({ usuario, cerrarSesion, mensajeBackend }) {
